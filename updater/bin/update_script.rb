@@ -11,6 +11,7 @@ Dependabot.logger = Logger.new($stdout)
 # ensure logs are output immediately. Useful when running in certain hosts like ContainerGroups
 $stdout.sync = true
 
+require "dependabot/credential"
 require "dependabot/file_fetchers"
 require "dependabot/file_parsers"
 require "dependabot/update_checkers"
@@ -61,7 +62,7 @@ $options = {
   reviewers: nil, # nil instead of empty array to avoid API rejection
   assignees: nil, # nil instead of empty array to avoid API rejection
   branch_name_separator: ENV["DEPENDABOT_BRANCH_NAME_SEPARATOR"] || "/", # Separator used for created branches.
-  milestone: ENV["DEPENDABOT_MILESTONE"] || nil, # Get the work item to attach
+  milestone: ENV["DEPENDABOT_MILESTONE"].to_i || nil, # Get the work item to attach
   vendor_dependencies: ENV["DEPENDABOT_VENDOR"] == "true",
   repo_contents_path: ENV["DEPENDABOT_REPO_CONTENTS_PATH"] || nil,
   updater_options: {},
@@ -138,30 +139,34 @@ $package_manager = PACKAGE_ECOSYSTEM_MAPPING.fetch($package_manager, $package_ma
 # Add GitHub Access Token (PAT) to avoid rate limiting, #
 # Setup extra credentials                               #
 ########################################################
-$options[:credentials] << {
+$options[:credentials] << Dependabot::Credential.new({
   "type" => "git_source",
   "host" => $options[:azure_hostname],
   "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
   "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
-}
+})
 
 $vulnerabilities_fetcher = nil
 unless ENV["GITHUB_ACCESS_TOKEN"].to_s.strip.empty?
   puts "GitHub access token has been provided."
   github_token = ENV.fetch("GITHUB_ACCESS_TOKEN", nil) # A GitHub access token with read access to public repos
-  $options[:credentials] << {
+  $options[:credentials] << Dependabot::Credential.new({
     "type" => "git_source",
     "host" => "github.com",
     "username" => "x-access-token",
     "password" => github_token
-  }
+  })
   $vulnerabilities_fetcher =
     Dependabot::Vulnerabilities::Fetcher.new($package_manager, github_token)
 end
 # DEPENDABOT_EXTRA_CREDENTIALS, for example:
 # "[{\"type\":\"npm_registry\",\"registry\":\"registry.npmjs.org\",\"token\":\"123\"}]"
 unless ENV["DEPENDABOT_EXTRA_CREDENTIALS"].to_s.strip.empty?
-  $options[:credentials] += JSON.parse(ENV.fetch("DEPENDABOT_EXTRA_CREDENTIALS", nil))
+  $options[:credentials].concat(
+    JSON.parse(ENV.fetch("DEPENDABOT_EXTRA_CREDENTIALS", nil)).map do |cred|
+      Dependabot::Credential.new(cred)
+    end
+  )
 end
 
 ##########################################
@@ -488,9 +493,9 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-
-puts "Fetching #{$package_manager} dependency files for #{$repo_name}"
-fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(
+clone = true
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
+fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
   repo_contents_path: $options[:repo_contents_path],
