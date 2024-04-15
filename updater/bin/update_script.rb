@@ -469,6 +469,9 @@ unless $options[:azure_virtual_directory].empty?
 end
 # Full name of the repo targeted.
 $repo_name = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
+unless $options[:azure_virtual_directory].empty?
+  $repo_name = "#{$options[:azure_virtual_directory]}/" + $repo_name
+end
 puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
