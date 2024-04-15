@@ -141,7 +141,7 @@ $package_manager = PACKAGE_ECOSYSTEM_MAPPING.fetch($package_manager, $package_ma
 # Setup extra credentials                               #
 ########################################################
 $options[:credentials] << Dependabot::Credential.new({
-  "type" => "git_source",
+  "type" => "azure",
   "host" => $options[:azure_hostname],
   "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
   "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
@@ -499,7 +499,7 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = false
+clone = true
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 fetcher_args = {
   source: $source,
