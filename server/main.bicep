@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 @description('Name of the resources. Make sure it is unique e.g. dependabotcontoso to avoid conflicts or failures')
 param name string = 'dependabot'
 
-@description('JSON array string fo projects to setup. E.g. [{"url":"https://dev.azure.com/tingle/dependabot","token":"dummy","AutoComplete":true}]')
+@description('JSON array string for projects to setup. E.g. [{"url":"https://dev.azure.com/tingle/dependabot","token":"dummy","AutoComplete":true}]')
 param projectSetups string = '[]'
 
 @description('Access token for authenticating requests to GitHub.')
@@ -14,7 +14,7 @@ param githubToken string = ''
 
 @minLength(1)
 @description('Tag of the docker images.')
-param imageTag string = '#{GITVERSION_NUGETVERSIONV2}#'
+param imageTag string = '#{IMAGE_TAG}#'
 
 var fileShares = [
   { name: 'certs' }
@@ -321,6 +321,13 @@ resource app 'Microsoft.App/containerApps@2023-05-01' = {
             memory: '0.5Gi'
           }
           probes: [
+            {
+              type: 'Startup'
+              httpGet: { port: 8080, path: '/liveness' }
+              initialDelaySeconds: 10
+              timeoutSeconds: 100
+              failureThreshold: 10
+            }
             { type: 'Liveness', httpGet: { port: 8080, path: '/liveness' } }
             {
               type: 'Readiness'
