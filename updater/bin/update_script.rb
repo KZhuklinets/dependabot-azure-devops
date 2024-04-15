@@ -462,16 +462,12 @@ Excon.defaults[:ssl_verify_peer] = false
 ####################################################
 # Setup the hostname, protocol and port to be used #
 ####################################################
-$options[:azure_port] = ENV["AZURE_PORT"] || ($options[:azure_protocol] == "http" ? "80" : "443")
-$api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}:#{$options[:azure_port]}/"
+$api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}/"
 unless $options[:azure_virtual_directory].empty?
   $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
 end
 # Full name of the repo targeted.
 $repo_name = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
-unless $options[:azure_virtual_directory].empty?
-  $repo_name = "#{$options[:azure_virtual_directory]}/" + $repo_name
-end
 puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
