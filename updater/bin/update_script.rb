@@ -454,9 +454,9 @@ if $options[:security_updates_only] && $vulnerabilities_fetcher.nil?
   raise StandardError, "Security updates are enabled but a GitHub token is not supplied! Cannot proceed"
 end
 
-# Excon.defaults[:ssl_verify_peer] = false
-Excon.defaults[:ssl_ca_path] = ENV['SSL_CERT_DIR']
-Excon.defaults[:ssl_ca_file] = ENV['SSL_CERT_FILE']
+Excon.defaults[:ssl_verify_peer] = false
+# Excon.defaults[:ssl_ca_path] = ENV['SSL_CERT_DIR']
+# Excon.defaults[:ssl_ca_file] = ENV['SSL_CERT_FILE']
 
     
 ####################################################
