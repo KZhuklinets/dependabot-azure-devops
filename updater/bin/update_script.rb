@@ -463,9 +463,6 @@ Excon.defaults[:ssl_verify_peer] = false
 # Setup the hostname, protocol and port to be used #
 ####################################################
 $api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}/"
-unless $options[:azure_virtual_directory].empty?
-  $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
-end
 # Full name of the repo targeted.
 $repo_name = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
 puts "Using '#{$api_endpoint}' as API endpoint"
