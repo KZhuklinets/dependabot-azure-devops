@@ -514,7 +514,6 @@ rescue => e
   file = File.open("/home/dependabot/dependabot-updater/git.store")
   puts file.readlines.map(&:chomp)
   file.close
-  sleep(600) # Wait for 10 minutes
 end
 files = fetcher.files
 commit = fetcher.commit
