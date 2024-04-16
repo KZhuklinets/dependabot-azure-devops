@@ -501,20 +501,20 @@ fetcher_args = {
   options: $options[:updater_options]
 }
 fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
-begin
-  if clone
-    puts "Cloning repository into #{$options[:repo_contents_path]}"
-    fetcher.clone_repo_contents
-  else
-    puts "Fetching #{package_manager} dependency files ..."
-    # Assuming you have a method to fetch dependency files here
-  end
-rescue => e
-  puts "An error occurred: #{e.message}"
-  file = File.open("/home/dependabot/dependabot-updater/git.store")
-  puts file.readlines.map(&:chomp)
-  file.close
-end
+# begin
+#   if clone
+#     puts "Cloning repository into #{$options[:repo_contents_path]}"
+#     fetcher.clone_repo_contents
+#   else
+#     puts "Fetching #{package_manager} dependency files ..."
+#     # Assuming you have a method to fetch dependency files here
+#   end
+# rescue => e
+#   puts "An error occurred: #{e.message}"
+#   file = File.open("/home/dependabot/dependabot-updater/git.store")
+#   puts file.readlines.map(&:chomp)
+#   file.close
+# end
 files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
