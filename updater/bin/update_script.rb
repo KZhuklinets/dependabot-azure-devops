@@ -511,7 +511,9 @@ begin
   end
 rescue => e
   puts "An error occurred: #{e.message}"
-  puts "Waiting for 10 minutes before retrying..."
+  file = File.open("/home/dependabot/dependabot-updater/git.store")
+  puts file.readlines.map(&:chomp)
+  file.close
   sleep(600) # Wait for 10 minutes
 end
 files = fetcher.files
