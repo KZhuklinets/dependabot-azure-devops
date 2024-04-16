@@ -515,12 +515,7 @@ rescue => e
   sleep(600) # Wait for 10 minutes
 end
 files = fetcher.files
-commit = fetcher.commitif clone
-  puts "Cloning repository into #{$options[:repo_contents_path]}"
-  fetcher.clone_repo_contents
-else
-  puts "Fetching #{$package_manager} dependency files ..."
-end
+commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 
