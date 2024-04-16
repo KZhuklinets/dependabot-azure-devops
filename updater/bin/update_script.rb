@@ -142,7 +142,7 @@ $package_manager = PACKAGE_ECOSYSTEM_MAPPING.fetch($package_manager, $package_ma
 ########################################################
 $options[:credentials] << Dependabot::Credential.new({
   "type" => "git_source",
-  "host" => "cns-ados-20",
+  "host" => $options[:azure_hostname],
   "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
   "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
 })
