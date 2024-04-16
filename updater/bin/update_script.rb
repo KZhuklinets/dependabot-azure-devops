@@ -515,8 +515,8 @@ fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**f
 #   puts file.readlines.map(&:chomp)
 #   file.close
 # end
-files = fetcher.files
-commit = fetcher.commit
+# files = fetcher.files
+# commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 
