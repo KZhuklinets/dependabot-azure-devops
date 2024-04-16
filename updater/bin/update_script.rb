@@ -503,7 +503,7 @@ fetcher_args = {
 fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 begin
   if clone
-    puts "Cloning repository into #{options[:repo_contents_path]}"
+    puts "Cloning repository into #{$options[:repo_contents_path]}"
     fetcher.clone_repo_contents
   else
     puts "Fetching #{package_manager} dependency files ..."
