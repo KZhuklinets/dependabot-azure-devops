@@ -544,7 +544,6 @@ commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 
-
 ##############################
 # Parse the dependency files #
 ##############################
