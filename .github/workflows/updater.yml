@@ -17,6 +17,10 @@ on:
     - ".github/workflows/updater.yml"
     - "!docs/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Build:
     runs-on: ubuntu-latest
@@ -40,6 +44,7 @@ jobs:
         - { ecosystem: pub }
         - { ecosystem: pip }
         - { ecosystem: swift }
+        - { ecosystem: devcontainers }
         - { ecosystem: terraform }
 
     env:
@@ -55,12 +60,13 @@ jobs:
         fetch-depth: 0 # Required for GitVersion
 
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0
+      uses: gittools/actions/gitversion/setup@v1
       with:
         versionSpec: '5.x'
 
     - name: Determine Version
-      uses: gittools/actions/gitversion/execute@v0
+      uses: gittools/actions/gitversion/execute@v1
+      id: gitversion
       with:
         useConfigFile: true
 
