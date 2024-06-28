@@ -89,7 +89,7 @@ $options = {
   azure_protocol: ENV["AZURE_PROTOCOL"] || "https",
   azure_port: nil,
   azure_virtual_directory: ENV["AZURE_VIRTUAL_DIRECTORY"] || "",
-    
+  
   # Details on SSL checks
   excon_ssl_verify_peer: ENV["EXCON_SSL_VERIFY_PEER"] == "true",
 
