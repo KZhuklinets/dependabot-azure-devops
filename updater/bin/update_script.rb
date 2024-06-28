@@ -89,6 +89,7 @@ $options = {
   azure_protocol: ENV["AZURE_PROTOCOL"] || "https",
   azure_port: nil,
   azure_virtual_directory: ENV["AZURE_VIRTUAL_DIRECTORY"] || "",
+  azure_skip_ssl_checks: ENV["AZURE_SKIP_SSL_CHECKS"] == "true",
 
   # Automatic completion
   set_auto_complete: ENV["AZURE_SET_AUTO_COMPLETE"] == "true", # Set auto complete on created pull requests
@@ -458,7 +459,7 @@ if $options[:security_updates_only] && $vulnerabilities_fetcher.nil?
   raise StandardError, "Security updates are enabled but a GitHub token is not supplied! Cannot proceed"
 end
 
-Excon.defaults[:ssl_verify_peer] = false
+Excon.defaults[:ssl_verify_peer] = $options[:azure_skip_ssl_checks]
 ####################################################
 # Setup the hostname, protocol and port to be used #
 ####################################################
@@ -476,7 +477,7 @@ puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
-  hostname: $options[:azure_hostname],
+  hostname: $api_endpoint,
   api_endpoint: $api_endpoint,
   repo: $repo_name,
   directory: $options[:directory],
