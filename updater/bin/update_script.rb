@@ -477,13 +477,6 @@ puts "Pull Requests shall be linked to milestone (work item) #{$options[:milesto
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
 puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
 
-$options[:credentials] << Dependabot::Credential.new({
-  "type" => "git_source",
-  "host" => $hostname,
-  "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
-  "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
-})
-puts "Creds #{$options[:credentials]}"
 $source = Dependabot::Source.new(
   provider: $options[:provider],
   hostname: $hostname,
