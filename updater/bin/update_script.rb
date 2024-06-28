@@ -92,7 +92,7 @@ $options = {
   
   # Details on SSL checks
   excon_ssl_verify_peer: ENV["EXCON_SSL_VERIFY_PEER"] == "true",
-
+  
   # Automatic completion
   set_auto_complete: ENV["AZURE_SET_AUTO_COMPLETE"] == "true", # Set auto complete on created pull requests
   auto_complete_ignore_config_ids: JSON.parse(ENV["AZURE_AUTO_COMPLETE_IGNORE_CONFIG_IDS"] || "[]"), # default to empty
