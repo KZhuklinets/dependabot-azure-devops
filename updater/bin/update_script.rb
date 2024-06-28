@@ -465,8 +465,10 @@ Excon.defaults[:ssl_verify_peer] = $options[:azure_skip_ssl_checks]
 ####################################################
 $options[:azure_port] = ENV["AZURE_PORT"] || ($options[:azure_protocol] == "http" ? "80" : "443")
 $api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}:#{$options[:azure_port]}/"
+$hostname = "#{$options[:azure_hostname]}:#{$options[:azure_port]}"
 unless $options[:azure_virtual_directory].empty?
   $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
+  $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
 end
 # Full name of the repo targeted.
 $repo_name = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
@@ -477,7 +479,7 @@ puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
-  hostname: "#{$options[:azure_hostname]}:#{$options[:azure_port]}/#{$options[:azure_virtual_directory]}",
+  hostname: $hostname,
   api_endpoint: $api_endpoint,
   repo: $repo_name,
   directory: $options[:directory],
