@@ -98,7 +98,7 @@ $options = {
 
   # Automatic Approval
   auto_approve_pr: ENV["AZURE_AUTO_APPROVE_PR"] == "true",
-  auto_approve_user_token: ENV["AZURE_AUTO_APPROVE_USER_TOKEN"] || ENV.fetch("AZURE_ACCESS_TOKEN", nil)
+  auto_approve_user_token: ENV["AZURE_AUTO_APPROVE_USER_TOKEN"] || ENV.fetch("AZURE_ACCESS_TOKEN", nil),
 
   # Details on SSL checks
   excon_ssl_verify_peer: ENV["EXCON_SSL_VERIFY_PEER"] == "true"
