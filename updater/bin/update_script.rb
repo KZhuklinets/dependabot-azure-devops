@@ -463,7 +463,7 @@ end
 
 Excon.defaults[:ssl_verify_peer] = $options[:excon_ssl_verify_peer]
 Excon.defaults[:debug_request] = true
-Excon.defaults[:debug_request] = true
+Excon.defaults[:debug_response] = true
 ####################################################
 # Setup the hostname, protocol and port to be used #
 ####################################################
