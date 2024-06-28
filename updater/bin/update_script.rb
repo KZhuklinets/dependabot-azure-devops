@@ -462,8 +462,8 @@ if $options[:security_updates_only] && $vulnerabilities_fetcher.nil?
 end
 
 Excon.defaults[:ssl_verify_peer] = $options[:excon_ssl_verify_peer]
-puts "1 #{Excon.defaults[:ssl_verify_peer]}"
-puts "2 #{Excon.defaults[:ssl_ca_file]}"
+Excon.defaults[:debug_request] = true
+Excon.defaults[:debug_request] = true
 ####################################################
 # Setup the hostname, protocol and port to be used #
 ####################################################
