@@ -497,6 +497,8 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
+puts "source '#{$source}'"
+puts "creds '#{$options[:credentials]}'"
 azure_client1 = Dependabot::Clients::Azure.for_source(
   source: $source,
   credentials: $options[:credentials]
