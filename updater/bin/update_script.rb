@@ -477,7 +477,7 @@ puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
-  hostname: $api_endpoint,
+  hostname: "#{$options[:azure_hostname]}:#{$options[:azure_port]}/#{$options[:azure_virtual_directory]}",
   api_endpoint: $api_endpoint,
   repo: $repo_name,
   directory: $options[:directory],
