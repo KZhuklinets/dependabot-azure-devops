@@ -497,6 +497,14 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
+azure_client1 = Dependabot::Clients::Azure.for_source(
+  source: $source,
+  credentials: $options[:credentials]
+)
+user_id = azure_client1.get_user_id
+target_branch_name = $options[:branch] || azure_client1.fetch_default_branch($source.repo)
+active_pull_requests = azure_client1.pull_requests_active(user_id, target_branch_name)
+    
 ##############################
 # Fetch the dependency files #
 ##############################
