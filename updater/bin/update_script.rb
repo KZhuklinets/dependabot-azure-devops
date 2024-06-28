@@ -476,12 +476,7 @@ puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
 puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
-$options[:credentials] << Dependabot::Credential.new({
-  "type" => "git_source",
-  "host" => $hostname,
-  "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
-  "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
-})
+
 $options[:credentials] << Dependabot::Credential.new({
   "type" => "git_source",
   "host" => "#{$options[:azure_hostname]}:#{$options[:azure_port]}",
@@ -511,7 +506,7 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = true
+clone = false
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 fetcher_args = {
   source: $source,
