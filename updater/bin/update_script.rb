@@ -144,12 +144,12 @@ $package_manager = PACKAGE_ECOSYSTEM_MAPPING.fetch($package_manager, $package_ma
 # Add GitHub Access Token (PAT) to avoid rate limiting, #
 # Setup extra credentials                               #
 ########################################################
-# $options[:credentials] << Dependabot::Credential.new({
-#   "type" => "git_source",
-#   "host" => $options[:azure_hostname],
-#   "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
-#   "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
-# })
+$options[:credentials] << Dependabot::Credential.new({
+  "type" => "git_source",
+  "host" => $options[:azure_hostname],
+  "username" => ENV["AZURE_ACCESS_USERNAME"] || "x-access-token",
+  "password" => ENV.fetch("AZURE_ACCESS_TOKEN", nil)
+})
 
 $vulnerabilities_fetcher = nil
 unless ENV["GITHUB_ACCESS_TOKEN"].to_s.strip.empty?
