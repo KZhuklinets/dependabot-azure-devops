@@ -13,14 +13,15 @@ Write-Output "Found dependabot-omnibus version: $version"
 $files = @(
     ".ruby-version"
     ".rubocop.yml"
-    # "Rakefile"
+    ".rubocop_todo.yml"
+    "Rakefile"
     "updater/.rubocop.yml"
 
-    "updater/bin/fetch_files.rb"
-    "updater/bin/update_files.rb"
+    # "updater/bin/fetch_files.rb"
+    # "updater/bin/update_files.rb"
 
-    "updater/config/.npmrc"
-    "updater/config/.yarnrc"
+    # "updater/config/.npmrc"
+    # "updater/config/.yarnrc"
 
     "updater/lib/dependabot/logger/formats.rb"
     "updater/lib/dependabot/sentry/exception_sanitizer_processor.rb"
@@ -59,7 +60,6 @@ $files = @(
 
     "updater/spec/dependabot/sentry/exception_sanitizer_processor_spec.rb"
     "updater/spec/dependabot/sentry/sentry_context_processor_spec.rb"
-    # "updater/spec/dependabot/updater/operations/group_update_all_versions_spec.rb"
     # "updater/spec/dependabot/updater/operations/refresh_group_update_pull_request_spec.rb"
     "updater/spec/dependabot/updater/dependency_group_change_batch_spec.rb"
     "updater/spec/dependabot/updater/error_handler_spec.rb"
@@ -73,7 +73,7 @@ $files = @(
     "updater/spec/dependabot/file_fetcher_command_spec.rb"
     "updater/spec/dependabot/job_spec.rb"
     "updater/spec/dependabot/service_spec.rb"
-    # "updater/spec/dependabot/update_files_command_spec.rb"
+    "updater/spec/dependabot/update_files_command_spec.rb"
     # "updater/spec/dependabot/updater_spec.rb"
 
     "updater/spec/fixtures/handle_error.json"
@@ -126,16 +126,12 @@ $files = @(
     "updater/spec/fixtures/jobs/job_with_vendor_dependencies.json"
     "updater/spec/fixtures/jobs/job_without_credentials.json"
     "updater/spec/fixtures/job_definitions/bundler/security_updates/group_update_multi_dir.yaml"
-    "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_all.yaml"
-    "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_all_with_existing_pr.yaml"
-    "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_all_with_vendoring.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh_dependencies_changed.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh_empty_group.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh_missing_group.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh_similar_pr.yaml"
     "updater/spec/fixtures/job_definitions/bundler/version_updates/group_update_refresh_versions_changed.yaml"
-    "updater/spec/fixtures/job_definitions/bundler/version_updates/update_all_simple.yaml"
     "updater/spec/fixtures/job_definitions/dummy/version_updates/group_update_peer_manifests.yaml"
     "updater/spec/fixtures/job_definitions/README.md"
     "updater/spec/fixtures/vcr_cassettes/Dependabot_FileFetcherCommand/_perform_job/when_the_connectivity_check_is_enabled/when_connectivity_is_broken/logs_connectivity_failed_and_does_not_raise_an_error.yml"
@@ -156,7 +152,7 @@ $files = @(
     "updater/spec/support/dependency_file_helpers.rb"
     "updater/spec/support/dummy_pkg_helpers.rb"
 
-    # "updater/spec/spec_helper.rb"
+    "updater/spec/spec_helper.rb"
 )
 
 # Download each file listed

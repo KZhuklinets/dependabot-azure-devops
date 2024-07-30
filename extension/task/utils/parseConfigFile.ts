@@ -165,6 +165,7 @@ function parseUpdates(config: any): IDependabotUpdate[] {
     var dependabotUpdate: IDependabotUpdate = {
       packageEcosystem: update["package-ecosystem"],
       directory: update["directory"],
+      directories: update["directories"] || [],
 
       openPullRequestsLimit: update["open-pull-requests-limit"],
       registries: update["registries"] || [],
@@ -197,6 +198,9 @@ function parseUpdates(config: any): IDependabotUpdate[] {
       commitMessage: update["commit-message"]
         ? JSON.stringify(update["commit-message"])
         : undefined,
+      groups: update["groups"]
+        ? JSON.stringify(update["groups"])
+        : undefined,
     };
 
     if (!dependabotUpdate.packageEcosystem) {
@@ -213,9 +217,9 @@ function parseUpdates(config: any): IDependabotUpdate[] {
       dependabotUpdate.openPullRequestsLimit = 5;
     }
 
-    if (!dependabotUpdate.directory) {
+    if (!dependabotUpdate.directory && dependabotUpdate.directories.length === 0) {
       throw new Error(
-        "The value 'directory' in dependency update config is missing"
+        "The values 'directory' and 'directories' in dependency update config is missing, you must specify at least one"
       );
     }
 
@@ -281,7 +285,7 @@ function parseRegistries(config: any): Record<string, IDependabotRegistry> {
     }
 
     // parse username, password, key, and token while replacing tokens where necessary
-    parsed.username = registryConfig["username"];
+    parsed.username = convertPlaceholder(registryConfig["username"]);
     parsed.password = convertPlaceholder(registryConfig["password"]);
     parsed.key = convertPlaceholder(registryConfig["key"]);
     parsed.token = convertPlaceholder(registryConfig["token"]);

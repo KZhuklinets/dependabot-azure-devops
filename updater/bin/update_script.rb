@@ -1,6 +1,9 @@
+# typed: true
 # frozen_string_literal: true
 
 # rubocop:disable Style/GlobalVars
+
+$LOAD_PATH.unshift(__dir__ + "/../lib")
 
 require "json"
 require "logger"
@@ -40,8 +43,10 @@ require "dependabot/swift"
 require "dependabot/devcontainers"
 require "dependabot/terraform"
 
-require_relative "azure_helpers"
-require_relative "vulnerabilities"
+require "tinglesoftware/dependabot/clients/azure"
+require "tinglesoftware/dependabot/vulnerabilities"
+
+require "tinglesoftware/azure/artifacts_credential_provider"
 
 # These options try to follow the dry-run.rb script.
 # https://github.com/dependabot/dependabot-core/blob/main/bin/dry-run.rb
@@ -161,7 +166,7 @@ unless ENV["GITHUB_ACCESS_TOKEN"].to_s.strip.empty?
     "password" => github_token
   })
   $vulnerabilities_fetcher =
-    Dependabot::Vulnerabilities::Fetcher.new($package_manager, github_token)
+    TingleSoftware::Dependabot::Vulnerabilities::Fetcher.new($package_manager, github_token)
 end
 # DEPENDABOT_EXTRA_CREDENTIALS, for example:
 # "[{\"type\":\"npm_registry\",\"registry\":\"registry.npmjs.org\",\"token\":\"123\"}]"
@@ -180,10 +185,10 @@ end
 unless ENV["DEPENDABOT_VERSIONING_STRATEGY"].to_s.strip.empty?
   # [Hash<String, Symbol>]
   VERSIONING_STRATEGIES = {
-    "lockfile-only" => RequirementsUpdateStrategy::LockfileOnly,
-    "widen" => RequirementsUpdateStrategy::WidenRanges,
-    "increase" => RequirementsUpdateStrategy::BumpVersions,
-    "increase-if-necessary" => RequirementsUpdateStrategy::BumpVersionsIfNecessary
+    "lockfile-only" => Dependabot::RequirementsUpdateStrategy::LockfileOnly,
+    "widen" => Dependabot::RequirementsUpdateStrategy::WidenRanges,
+    "increase" => Dependabot::RequirementsUpdateStrategy::BumpVersions,
+    "increase-if-necessary" => Dependabot::RequirementsUpdateStrategy::BumpVersionsIfNecessary
   }.freeze
   strategy_raw = ENV.fetch("DEPENDABOT_VERSIONING_STRATEGY", nil)
   $options[:requirements_update_strategy] = case strategy_raw
@@ -197,8 +202,8 @@ unless ENV["DEPENDABOT_VERSIONING_STRATEGY"].to_s.strip.empty?
   # https://github.com/dependabot/dependabot-core/blob/5926b243b2875ad0d8c0a52c09210c4f5f274c5e/composer/lib/dependabot/composer/update_checker/requirements_updater.rb#L23-L24
   if $package_manager == "npm_and_yarn" || $package_manager == "composer"
     strategy = $options[:requirements_update_strategy]
-    if strategy.nil? || strategy == RequirementsUpdateStrategy::LockfileOnly
-      $options[:requirements_update_strategy] = RequirementsUpdateStrategy::BumpVersions
+    if strategy.nil? || strategy == Dependabot::RequirementsUpdateStrategy::LockfileOnly
+      $options[:requirements_update_strategy] = Dependabot::RequirementsUpdateStrategy::BumpVersions
     end
   end
 
@@ -206,8 +211,8 @@ unless ENV["DEPENDABOT_VERSIONING_STRATEGY"].to_s.strip.empty?
   # https://github.com/dependabot/dependabot-core/blob/ca9f236591ba49fa6e2a8d5f06e538614033a628/pub/lib/dependabot/pub/update_checker.rb#L110
   if $package_manager == "pub"
     strategy = $options[:requirements_update_strategy]
-    if strategy == RequirementsUpdateStrategy::LockfileOnly
-      $options[:requirements_update_strategy] = RequirementsUpdateStrategy::BumpVersions
+    if strategy == Dependabot::RequirementsUpdateStrategy::LockfileOnly
+      $options[:requirements_update_strategy] = Dependabot::RequirementsUpdateStrategy::BumpVersions
     end
   end
 end
@@ -234,8 +239,12 @@ TYPE_HANDLERS = {
 
 def allow_conditions_for(dep)
   # Find where the name matches then get the type e.g. production, direct, etc
-  found = $options[:allow_conditions].find { |al| dep.name.match?(al["dependency-name"]) }
-  found ? found["dependency-type"] : "all" # when not specified, allow all types
+  condition = $options[:allow_conditions].find do |al|
+    Dependabot::Config::UpdateConfig.wildcard_match?(al["dependency-name"] || "*", dep.name)
+  end
+  return nil unless condition
+
+  condition["dependency-type"] || "all" # when not specified, allow all types
 end
 
 #################################################################
@@ -550,13 +559,13 @@ dependencies.select(&:top_level?).each { |d| puts " - #{d.name} (#{d.version})" 
 ################################################
 # Get active pull requests for this repository #
 ################################################
-azure_client = Dependabot::Clients::Azure.for_source(
+azure_client = TingleSoftware::Dependabot::Clients::Azure.for_source(
   source: $source,
   credentials: $options[:credentials]
 )
 user_id = azure_client.get_user_id
 target_branch_name = $options[:branch] || azure_client.fetch_default_branch($source.repo)
-active_pull_requests = azure_client.pull_requests_active(user_id, target_branch_name)
+active_pull_requests = azure_client.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
 
 pull_requests_count = 0
 
@@ -928,7 +937,7 @@ end
 # look for pull requests that are no longer needed to be abandoned
 if $options[:close_unwanted]
   puts "Looking for pull requests that are no longer needed."
-  active_pull_requests = azure_client.pull_requests_active(user_id, target_branch_name)
+  active_pull_requests = azure_client.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
   active_pull_requests.each do |pr|
     pr_id = pr["pullRequestId"]
     title = pr["title"]

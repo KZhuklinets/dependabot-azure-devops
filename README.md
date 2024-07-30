@@ -11,7 +11,7 @@ In this repository you'll find:
 1. Dependabot [updater](./updater) in Ruby. See [docs](./docs/updater.md).
 2. Dockerfile and build/image for running the updater via Docker [here](./updater/Dockerfile).
 3. Dependabot [server](./server/) in .NET/C#. See [docs](./docs/server.md).
-4. Azure DevOps [Extension](https://marketplace.visualstudio.com/items?itemName=tingle-software.dependabot) and [source](./extension).
+4. Azure DevOps [Extension](https://marketplace.visualstudio.com/items?itemName=tingle-software.dependabot) and [source](./extension). See [docs](./docs/extension.md).
 
 > The hosted version is available to sponsors (most, but not all). It includes hustle free runs where the infrastructure is maintained for you. Much like the GitHub hosted version. Alternatively, you can run and host your own [server](./docs/server.md). Once you sponsor, you can send out an email to an maintainer or wait till they reach out. This is meant to ease the burden until GitHub/Azure/Microsoft can get it working natively (which could also be never) and hopefully for free.
 
@@ -41,26 +41,69 @@ registries:
   my-analyzers:
     type: nuget-feed
     url: https://dev.azure.com/organization2/_packaging/my-analyzers/nuget/v3/index.json
-    token: PAT:${{ANOTHER_PAT}}
+    token: PAT:${{MY_OTHER_PAT}}
   artifactory:
     type: nuget-feed
     url: https://artifactory.com/api/nuget/v3/myfeed
-    token: PAT:${{DEPENDABOT_ARTIFACTORY_PAT}}
+    token: PAT:${{MY_ARTIFACTORY_PAT}}
+  telerik:
+    type: nuget-feed
+    url: https://nuget.telerik.com/v3/index.json
+    username: ${{MY_TELERIK_USERNAME}}
+    password: ${{MY_TELERIK_PASSWORD}}
+    token: ${{MY_TELERIK_USERNAME}}:${{MY_TELERIK_PASSWORD}}
 updates:
-...
+  ...
 ```
 
 Note:
 
 1. `${{VARIABLE_NAME}}` notation is used liked described [here](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-encrypted-secrets-for-dependabot)
-BUT the values will be used from Environment Variables in the pipeline/environment. Template variables are not supported for this replacement. Replacement only works for values considered secret in the registries section i.e. `password`, `token`, and `key`
+BUT the values will be used from Environment Variables in the pipeline/environment. Template variables are not supported for this replacement. Replacement only works for values considered secret in the registries section i.e. `username`, `password`, `token`, and `key`
 
-2. When using a token the notation should be `PAT:${{VARIABLE_NAME}}`. Otherwise the wrong authentication mechanism is used by dependabot, see [here](https://github.com/tinglesoftware/dependabot-azure-devops/issues/50).
+2. When using an Azure DevOps Artifact feed, only the `token` property is required. The token notation should be `PAT:${{VARIABLE_NAME}}` otherwise the wrong authentication mechanism is used by Dependabot, see [here](https://github.com/tinglesoftware/dependabot-azure-devops/issues/50) for more details. 
+When working with Azure DevOps Artifacts, some extra permission steps need to be done:
 
-When working with Azure Artifacts, some extra permission steps need to be done:
+    1. The PAT should have *Packaging Read* permission.
+    2. The user owning the PAT must be granted permissions to access the feed either directly or via a group. An easy way for this is to give `Contributor` permissions the `[{project_name}]\Contributors` group under the `Feed Settings -> Permissions` page. The page has the url format: `https://dev.azure.com/{organization}/{project}/_packaging?_a=settings&feed={feed-name}&view=permissions`.
 
-1. The PAT should have *Packaging Read* permission.
-2. The user owning the PAT must be granted permissions to access the feed either directly or via a group. An easy way for this is to give `Contributor` permissions the `[{project_name}]\Contributors` group under the `Feed Settings -> Permissions` page. The page has the url format: `https://dev.azure.com/{organization}/{project}/_packaging?_a=settings&feed={feed-name}&view=permissions`.
+3. When using a NuGet package server secured with basic auth, the `username`, `password`, and `token` properties are all required. The token notation should be `${{USERNAME}}:${{PASSWORD}}`, see [here](https://github.com/tinglesoftware/dependabot-azure-devops/issues/1232#issuecomment-2247616424) for more details.
+
+
+4. When your project contains a `nuget.config` file with custom package source configuration, the `key` property is required for each nuget-feed registry. The key must match between `dependabot.yml` and `nuget.config` otherwise the package source will be duplicated, package source mappings will be ignored, and auth errors will occur during dependency discovery.
+
+   If your `nuget.config` looks like this:
+     ```xml
+      <?xml version="1.0" encoding="utf-8"?>
+      <configuration>
+        <packageSources>
+          <clear />
+          <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+          <add key="my-organisation1-nuget" value="https://dev.azure.com/my-organization/_packaging/my-nuget-feed/nuget/v3/index.json" />
+        </packageSources>
+        <packageSourceMapping>
+          <packageSource key="nuget.org">
+            <package pattern="*" />
+          </packageSource>
+          <packageSource key="my-organisation-nuget">
+            <package pattern="Organisation.*" />
+          </packageSource>
+        </packageSourceMapping>
+      </configuration>
+      ```
+
+    Then your `dependabot.yml` registry should look like this:
+
+    ```yml
+    version: 2
+    registries:
+      my-org:
+        type: nuget-feed
+        key: my-organisation1-nuget
+        url: https://dev.azure.com/my-organization/_packaging/my-nuget-feed/nuget/v3/index.json
+        token: PAT:${{MY_DEPENDABOT_ADO_PAT}}
+    ```
+    
 
 ## Security Advisories, Vulnerabilities, and Updates
 
@@ -68,7 +111,14 @@ Security-only updates ia a mechanism to only create pull requests for dependenci
 
 A GitHub access token with `public_repo` access is required to perform the GitHub GraphQL for `securityVulnerabilities`.
 
-### Acknowledgements
+## Development Guide
+
+If you'd like to contribute to the project or just run it locally, view our development guides for:
+
+- [Azure DevOps extension](./docs/extension.md#development-guide)
+- [Dependabot updater](./docs/updater.md#development-guide)
+
+## Acknowledgements
 
 The work in this repository is based on inspired and occasionally guided by some predecessors in the same area:
 
@@ -78,6 +128,6 @@ The work in this repository is based on inspired and occasionally guided by some
 4. andrcun's work on GitLab: [code](https://gitlab.com/dependabot-gitlab/dependabot)
 5. WeWork's work for GitLab: [code](https://github.com/wemake-services/kira-dependencies)
 
-### Issues &amp; Comments
+## Issues &amp; Comments
 
 Please leave all comments, bugs, requests, and issues on the Issues page. We'll respond to your request ASAP!
