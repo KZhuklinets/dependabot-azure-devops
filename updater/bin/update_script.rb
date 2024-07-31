@@ -490,7 +490,7 @@ puts "Pull Requests shall be linked to milestone (work item) #{$options[:milesto
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
 puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
 puts "hostname '#{$hostname}'"
-    
+
 $source = Dependabot::Source.new(
   provider: $options[:provider],
   hostname: $hostname,
