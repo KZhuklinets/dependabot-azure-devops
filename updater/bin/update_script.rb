@@ -489,7 +489,8 @@ puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
 puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
-
+puts "hostname '#{$hostname}'"
+    
 $source = Dependabot::Source.new(
   provider: $options[:provider],
   hostname: $hostname,
@@ -511,18 +512,18 @@ end
 
 puts "source '#{$source}'"
 puts "creds '#{$options[:credentials]}'"
-puts "1"
-azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
-  source: $source,
-  credentials: $options[:credentials]
-)
-puts "2"
-user_id = azure_client1.get_user_id(ENV.fetch("AZURE_ACCESS_TOKEN", nil))
-puts "3"
-puts "user_id '#{$user_id}'"
-puts "4"
-target_branch_name = $options[:branch] || azure_client1.fetch_default_branch($source.repo)
-active_pull_requests = azure_client1.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
+# puts "1"
+# azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
+#   source: $source,
+#   credentials: $options[:credentials]
+# )
+# puts "2"
+# user_id = azure_client1.get_user_id(ENV.fetch("AZURE_ACCESS_TOKEN", nil))
+# puts "3"
+# puts "user_id '#{$user_id}'"
+# puts "4"
+# target_branch_name = $options[:branch] || azure_client1.fetch_default_branch($source.repo)
+# active_pull_requests = azure_client1.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
 
 ##############################
 # Fetch the dependency files #
