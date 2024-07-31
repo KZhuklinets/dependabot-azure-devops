@@ -508,13 +508,13 @@ end
 
 puts "source '#{$source}'"
 puts "creds '#{$options[:credentials]}'"
-azure_client1 = Dependabot::Clients::Azure.for_source(
+azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
   source: $source,
   credentials: $options[:credentials]
 )
 user_id = azure_client1.get_user_id
 target_branch_name = $options[:branch] || azure_client1.fetch_default_branch($source.repo)
-active_pull_requests = azure_client1.pull_requests_active(user_id, target_branch_name)
+active_pull_requests = azure_client1.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
 
 ##############################
 # Fetch the dependency files #
