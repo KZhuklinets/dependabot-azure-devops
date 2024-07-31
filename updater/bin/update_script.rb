@@ -519,7 +519,7 @@ azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
 puts "2"
 user_id = azure_client1.get_user_id(ENV.fetch("AZURE_ACCESS_TOKEN", nil))
 puts "3"
-puts "user_id #{$user_id}"
+puts "user_id '#{$user_id}'"
 puts "4"
 target_branch_name = $options[:branch] || azure_client1.fetch_default_branch($source.repo)
 active_pull_requests = azure_client1.pull_requests_active_for_user_and_targeting_branch(user_id, target_branch_name)
