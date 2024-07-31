@@ -493,7 +493,7 @@ puts "hostname '#{$hostname}'"
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
-  hostname: $hostname,
+  hostname: ENV["AZURE_HOSTNAME"],
   api_endpoint: $api_endpoint,
   repo: $repo_name,
   directory: $options[:directory],
