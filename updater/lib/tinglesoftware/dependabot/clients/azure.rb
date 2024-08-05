@@ -12,7 +12,7 @@ module TingleSoftware
   module Dependabot
     module Clients
       class Azure < ::Dependabot::Clients::Azure
-        API_VERSION = "7.1"
+        API_VERSION = "7.0"
 
         # https://learn.microsoft.com/en-us/javascript/api/azure-devops-extension-api/connectiondata
         def get_user_id(token = nil)
