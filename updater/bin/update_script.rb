@@ -516,9 +516,8 @@ puts "creds '#{$options[:credentials]}'"
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = true
+clone = false
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
-puts "repo_contents_path #{$options[:repo_contents_path]}"
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
