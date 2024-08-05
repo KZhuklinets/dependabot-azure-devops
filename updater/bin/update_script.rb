@@ -516,9 +516,8 @@ puts "creds '#{$options[:credentials]}'"
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = true
+clone = false
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
-# $options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/test"
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
@@ -536,7 +535,7 @@ files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
-
+$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/CNS%20Connect/Internal%20Libraries%20and%20Tools/_git/Internal%20Libraries"
 puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
 ##############################
 # Parse the dependency files #
