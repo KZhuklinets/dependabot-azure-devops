@@ -535,7 +535,7 @@ files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
-$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/CNS%20Connect/Internal%20Libraries%20and%20Tools/_git/Internal%20Libraries"
+$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/CNS%20Connect"
 puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
 ##############################
 # Parse the dependency files #
