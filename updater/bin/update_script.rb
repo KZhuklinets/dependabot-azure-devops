@@ -517,8 +517,8 @@ puts "creds '#{$options[:credentials]}'"
 # Fetch the dependency files #
 ##############################
 clone = true
-# $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
-$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/test"
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
+# $options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/test"
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
