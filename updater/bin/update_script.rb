@@ -536,6 +536,7 @@ commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 
+puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
 ##############################
 # Parse the dependency files #
 ##############################
