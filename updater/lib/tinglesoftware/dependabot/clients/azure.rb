@@ -195,15 +195,6 @@ module TingleSoftware
 
           response
         end
-
-        def clone_repo_with_token(repo_url, destination, token)
-          Excon.get(repo_url,
-            headers: { "Authorization" => "Bearer #{token}" },
-            response_block: lambda { |chunk, remaining_bytes, total_bytes|
-              File.open(destination, 'ab') { |f| f.write(chunk) }
-            }
-          )
-        end
       end
     end
   end
