@@ -517,7 +517,8 @@ puts "creds '#{$options[:credentials]}'"
 # Fetch the dependency files #
 ##############################
 clone = true
-$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
+# $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
+$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/test"
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
@@ -527,7 +528,7 @@ fetcher_args = {
 fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 if clone
   puts "Cloning repository into #{$options[:repo_contents_path]}"
-  fetcher.clone_repo_contents
+  # fetcher.clone_repo_contents
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
