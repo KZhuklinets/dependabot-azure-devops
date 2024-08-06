@@ -569,10 +569,12 @@ begin
     end
   end
   puts "File extracted successfully."
+  Dir.chdir($options[:repo_contents_path])
 rescue StandardError => e
   puts "Error during extraction: #{e.message}"
   exit(1)
 end
+
 ##############################
 # Parse the dependency files #
 ##############################
