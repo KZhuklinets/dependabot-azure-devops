@@ -556,10 +556,22 @@ response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" }
 
 File.binwrite(zip_file_path, response.body)
 
-Zip::File.open(zip_file_path) do |zip_file|
-  zip_file.each do |entry|
-    entry.extract(File.join($options[:repo_contents_path], entry.name)) { true }
+begin
+  Zip::File.open(zip_file_path) do |zip_file|
+    zip_file.each do |entry|
+      entry_path = File.join($options[:repo_contents_path], entry.name)
+      if entry.directory?
+        FileUtils.mkdir_p(entry_path)
+      else
+        FileUtils.mkdir_p(File.dirname(entry_path))
+        entry.extract(entry_path) { true }
+      end
+    end
   end
+  puts "File extracted successfully."
+rescue StandardError => e
+  puts "Error during extraction: #{e.message}"
+  exit(1)
 end
 ##############################
 # Parse the dependency files #
