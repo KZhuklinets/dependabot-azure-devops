@@ -564,6 +564,7 @@ Zip::File.open(zip_file_path) do |zip_file|
     FileUtils.mkdir_p(File.dirname(entry_path))
     zip_file.extract(entry, entry_path) unless File.exist?(entry_path)
   end
+end
 ##############################
 # Parse the dependency files #
 ##############################
