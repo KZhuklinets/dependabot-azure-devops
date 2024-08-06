@@ -534,17 +534,23 @@ if clone
   puts "url = #{url}"
   auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
+  # Construct the config string
   config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
-  clone_options = StringIO.new
+  # Construct the clone options string
+  clone_options = []
   clone_options << "--no-tags --depth 1"
-  clone_options << " --recurse-submodules --shallow-submodules"
-  clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
+  clone_options << "--recurse-submodules --shallow-submodules"
+  clone_options << "--branch #{$options[:branch]} --single-branch" if $options[:branch]
+  clone_options_string = clone_options.join(' ')
+  # Construct the full git command
+  git_command = "git #{config} clone #{clone_options_string} #{url} #{repo_contents_path}"
+  # Output for debugging
   puts "Cloning repository into #{repo_contents_path}"
-  puts "git #{config} clone #{clone_options.string} #{url} #{repo_contents_path}"
-
+  puts git_command
+  # Run the shell command
   Dependabot::SharedHelpers.run_shell_command(
     <<~CMD
-      git #{config} clone #{clone_options.string} #{url} #{repo_contents_path}
+      #{git_command}
     CMD
   )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
