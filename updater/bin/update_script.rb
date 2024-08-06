@@ -8,6 +8,7 @@ $LOAD_PATH.unshift(__dir__ + "/../lib")
 require "json"
 require "logger"
 require "dependabot/logger"
+require "dependabot/shared_helpers"
 require "zip"
 
 # require "git"
