@@ -106,7 +106,7 @@ jobs:
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg ECOSYSTEM=${{ matrix.suite.ecosystem }} \
         --build-arg BASE_VERSION=${{ steps.docker-base-version.outputs.version }} \
-        --build-arg DEPENDABOT_UPDATER_VERSION=${{ steps.gitversion.outputs.fullSemVer }} \
+        --build-arg DEPENDABOT_UPDATER_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }} \
         --label com.github.image.run.id=${{ github.run_id }} \
         --label com.github.image.run.number=${{ github.run_number }} \
         --label com.github.image.job.id=${{ github.job }} \
@@ -114,7 +114,7 @@ jobs:
         --label com.github.image.source.branch=${{ github.ref }} \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.shortSha }}" \
-        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.fullSemVer }}" \
+        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.nuGetVersionV2 }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major}}.${{ steps.gitversion.outputs.minor }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major }}" \
         --cache-from ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest \
