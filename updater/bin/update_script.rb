@@ -529,7 +529,7 @@ fetcher_args = {
 if clone
   # fetcher.clone_repo_contents
   # Custom cloning, built-in doesn't work because of authentication
-  repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/git/" \
+  repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/" \
                   "#{$options[:azure_repository]}"
   url = $api_endpoint + repo_api_path
   puts "url = #{url}"
@@ -541,6 +541,7 @@ if clone
   clone_options << " --recurse-submodules --shallow-submodules"
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
   puts "Cloning repository into #{repo_contents_path}"
+  puts "git clone #{clone_options.string} #{url} #{repo_contents_path}"
   Dependabot::SharedHelpers.run_shell_command(
     <<~CMD
       git clone #{clone_options.string} #{url} #{repo_contents_path}
