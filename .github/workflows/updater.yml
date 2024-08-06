@@ -101,19 +101,11 @@ jobs:
 
     - name: Display Variables
       run: |
-        echo "ECOSYSTEM: ${{ matrix.suite.ecosystem }}"
-        echo "GITHUB_RUN_ID: ${{ github.run_id }}"
-        echo "GITHUB_RUN_NUMBER: ${{ github.run_number }}"
-        echo "GITHUB_JOB: ${{ github.job }}"
-        echo "GITHUB_SHA: ${{ github.sha }}"
-        echo "GITHUB_REF: ${{ github.ref }}"
-        echo "GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}"
-        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
-        echo "GITVERSION_SHORT_SHA: ${{ steps.gitversion.outputs.shortSha }}"
         echo "GITVERSION_NUGET_VERSION_V2: ${{ steps.gitversion.outputs.fullSemVer }}"
-        echo "GITVERSION_MAJOR: ${{ steps.gitversion.outputs.major }}"
-        echo "GITVERSION_MINOR: ${{ steps.gitversion.outputs.minor }}"
-      
+    - name: Remove plus from fullSemVer
+      id: remove_plus
+      run: echo "::set-output name=cleanedFullSemVer::${{ steps.gitversion.outputs.fullSemVer//+/ }}" # This removes all + symbols
+
     - name: Build image
       run: |
         docker build \
@@ -121,7 +113,7 @@ jobs:
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg ECOSYSTEM=${{ matrix.suite.ecosystem }} \
         --build-arg BASE_VERSION=${{ steps.docker-base-version.outputs.version }} \
-        --build-arg DEPENDABOT_UPDATER_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }} \
+        --build-arg DEPENDABOT_UPDATER_VERSION=${{ steps.remove_plus.outputs.cleanedFullSemVer }} \
         --label com.github.image.run.id=${{ github.run_id }} \
         --label com.github.image.run.number=${{ github.run_number }} \
         --label com.github.image.job.id=${{ github.job }} \
@@ -129,7 +121,7 @@ jobs:
         --label com.github.image.source.branch=${{ github.ref }} \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.shortSha }}" \
-        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.fullSemVer }}" \
+        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.remove_plus.outputs.cleanedFullSemVer }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major}}.${{ steps.gitversion.outputs.minor }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major }}" \
         --cache-from ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest \
