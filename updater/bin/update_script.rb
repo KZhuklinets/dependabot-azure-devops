@@ -549,9 +549,11 @@ if clone
   puts git_command
   # Run the shell command
   Dependabot::SharedHelpers.run_shell_command(
-    <<~CMD
-      #{git_command}
-    CMD
+    git_command,
+    allow_unsafe_shell_command: true,
+    env: {},
+    fingerprint: nil,
+    stderr_to_stdout: true
   )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
