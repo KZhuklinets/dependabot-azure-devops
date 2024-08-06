@@ -99,9 +99,11 @@ jobs:
         echo "Using dependabot-updater image tag '$tag_sha' (v$tag_name)"
         echo "version=$tag_sha" >> $GITHUB_OUTPUT
 
-    - name: Remove plus from fullSemVer
+    - name: Remove + from fullSemVer
       id: remove_plus
-      run: echo "::set-output name=cleanedFullSemVer::${{ steps.gitversion.outputs.fullSemVer//+/ }}" # This removes all + symbols
+      run: |
+        cleanedFullSemVer=$(echo "${{ steps.gitversion.outputs.fullSemVer }}" | tr -d '+')
+        echo "::set-output name=cleanedFullSemVer::$cleanedFullSemVer"
 
     - name: Display Variables
       run: |
