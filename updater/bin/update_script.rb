@@ -516,7 +516,9 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = $package_manager == "nuget"
+# clone = $package_manager == "nuget"
+clone = true
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
@@ -584,9 +586,6 @@ parser = Dependabot::FileParsers.for_package_manager($package_manager).new(
 dependencies = parser.parse
 puts "Found #{dependencies.count(&:top_level?)} dependencies"
 dependencies.select(&:top_level?).each { |d| puts " - #{d.name} (#{d.version})" }
-
-# Need to have this line here - otherwise if it is filled then fetcher.files tries to clone in a wrong way
-$options[:repo_contents_path] = nil
 ################################################
 # Get active pull requests for this repository #
 ################################################
