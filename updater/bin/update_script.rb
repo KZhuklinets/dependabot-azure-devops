@@ -541,7 +541,7 @@ if clone
   clone_options << " --recurse-submodules --shallow-submodules"
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
   puts "Cloning repository into #{repo_contents_path}"
-  SharedHelpers.run_shell_command(
+  Dependabot::SharedHelpers.run_shell_command(
     <<~CMD
       git clone #{clone_options.string} #{url} #{repo_contents_path}
     CMD
