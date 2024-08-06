@@ -516,61 +516,59 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = false
-# $package_manager == "nuget"
-$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
-$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
+clone = $package_manager == "nuget"
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
   repo_contents_path: $options[:repo_contents_path],
   options: $options[:updater_options]
 }
-fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 if clone
   puts "Cloning repository into #{$options[:repo_contents_path]}"
   # fetcher.clone_repo_contents
   # Custom cloning, built-in doesn't work because of authentication
-  # $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
-  puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
-  # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
-  #                  "&$format=zip&download=true"
-  # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
-  #                 "#{$options[:azure_repository]}/items?#{repo_api_query}"
-  # url = $api_endpoint + repo_api_path
-  # puts "url = #{url}"
-  # auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
-  # temp_dir = File.join(Dir.pwd, "tmp")
-  # zip_file_path = File.join(temp_dir, "downloaded.zip")
-  # puts "zip_file_path = #{zip_file_path}"
-  # FileUtils.mkdir_p(temp_dir)
-  # response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
-  # File.binwrite(zip_file_path, response.body)
-  # begin
-  #   Zip::File.open(zip_file_path) do |zip_file|
-  #     zip_file.each do |entry|
-  #       entry_path = File.join($options[:repo_contents_path], entry.name)
-  #       if entry.directory?
-  #         FileUtils.mkdir_p(entry_path)
-  #       else
-  #         FileUtils.mkdir_p(File.dirname(entry_path))
-  #         entry.extract(entry_path) { true }
-  #       end
-  #     end
-  #   end
-  #   puts "File extracted successfully."
-  # rescue StandardError => e
-  #   puts "Error during extraction: #{e.message}"
-  #   exit(1)
-  # end
+  repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
+  puts "repo_contents_path = #{repo_contents_path}"
+  repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
+                   "&$format=zip&download=true"
+  repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
+                  "#{$options[:azure_repository]}/items?#{repo_api_query}"
+  url = $api_endpoint + repo_api_path
+  puts "url = #{url}"
+  auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
+  temp_dir = File.join(Dir.pwd, "tmp")
+  zip_file_path = File.join(temp_dir, "downloaded.zip")
+  puts "zip_file_path = #{zip_file_path}"
+  FileUtils.mkdir_p(temp_dir)
+  response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
+  File.binwrite(zip_file_path, response.body)
+  begin
+    Zip::File.open(zip_file_path) do |zip_file|
+      zip_file.each do |entry|
+        entry_path = File.join(repo_contents_path, entry.name)
+        if entry.directory?
+          FileUtils.mkdir_p(entry_path)
+        else
+          FileUtils.mkdir_p(File.dirname(entry_path))
+          entry.extract(entry_path) { true }
+        end
+      end
+    end
+    puts "File extracted successfully."
+  rescue StandardError => e
+    puts "Error during extraction: #{e.message}"
+    exit(1)
+  end
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
+fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
-
+# Need to have this line here - otherwise if it is filled then fetcher.files tries to clone in a wrong way
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 ##############################
 # Parse the dependency files #
 ##############################
