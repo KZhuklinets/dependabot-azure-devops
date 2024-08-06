@@ -547,7 +547,7 @@ if clone
   puts "encoded_token = #{encoded_token}"
   Dependabot::SharedHelpers.run_shell_command(
     <<~CMD
-      git clone #{clone_options.string} #{url} #{repo_contents_path}
+      git #{clone_options.string} clone #{url} #{repo_contents_path}
     CMD
   )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
