@@ -546,17 +546,15 @@ url = $api_endpoint + repo_api_path
 puts "url = #{url}"
 
 auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
-temp_dir = File.join(Dir.pwd, 'tmp')
-zip_file_path = File.join(temp_dir, 'downloaded.zip')
+temp_dir = File.join(Dir.pwd, "tmp")
+zip_file_path = File.join(temp_dir, "downloaded.zip")
 puts "zip_file_path = #{zip_file_path}"
     
 FileUtils.mkdir_p(temp_dir)
 
-response = Excon.get(url, headers: { 'Authorization' => "Bearer #{auth_token}" })
+response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
 
-File.open(zip_file_path, 'wb') do |file|
-  file.write(response.body)
-end
+File.binwrite(zip_file_path, response.body)
 
 Zip::File.open(zip_file_path) do |zip_file|
   zip_file.each do |entry|
