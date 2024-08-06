@@ -550,10 +550,7 @@ if clone
   # Run the shell command
   Dependabot::SharedHelpers.run_shell_command(
     git_command,
-    allow_unsafe_shell_command: true,
-    env: {},
-    fingerprint: nil,
-    stderr_to_stdout: true
+    allow_unsafe_shell_command: true
   )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
