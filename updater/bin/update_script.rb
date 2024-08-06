@@ -531,36 +531,36 @@ if clone
   # Custom cloning, built-in doesn't work because of authentication
   $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
   puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
-  repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
-                   "&$format=zip&download=true"
-  repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
-                  "#{$options[:azure_repository]}/items?#{repo_api_query}"
-  url = $api_endpoint + repo_api_path
-  puts "url = #{url}"
-  auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
-  temp_dir = File.join(Dir.pwd, "tmp")
-  zip_file_path = File.join(temp_dir, "downloaded.zip")
-  puts "zip_file_path = #{zip_file_path}"
-  FileUtils.mkdir_p(temp_dir)
-  response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
-  File.binwrite(zip_file_path, response.body)
-  begin
-    Zip::File.open(zip_file_path) do |zip_file|
-      zip_file.each do |entry|
-        entry_path = File.join($options[:repo_contents_path], entry.name)
-        if entry.directory?
-          FileUtils.mkdir_p(entry_path)
-        else
-          FileUtils.mkdir_p(File.dirname(entry_path))
-          entry.extract(entry_path) { true }
-        end
-      end
-    end
-    puts "File extracted successfully."
-  rescue StandardError => e
-    puts "Error during extraction: #{e.message}"
-    exit(1)
-  end
+  # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
+  #                  "&$format=zip&download=true"
+  # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
+  #                 "#{$options[:azure_repository]}/items?#{repo_api_query}"
+  # url = $api_endpoint + repo_api_path
+  # puts "url = #{url}"
+  # auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
+  # temp_dir = File.join(Dir.pwd, "tmp")
+  # zip_file_path = File.join(temp_dir, "downloaded.zip")
+  # puts "zip_file_path = #{zip_file_path}"
+  # FileUtils.mkdir_p(temp_dir)
+  # response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
+  # File.binwrite(zip_file_path, response.body)
+  # begin
+  #   Zip::File.open(zip_file_path) do |zip_file|
+  #     zip_file.each do |entry|
+  #       entry_path = File.join($options[:repo_contents_path], entry.name)
+  #       if entry.directory?
+  #         FileUtils.mkdir_p(entry_path)
+  #       else
+  #         FileUtils.mkdir_p(File.dirname(entry_path))
+  #         entry.extract(entry_path) { true }
+  #       end
+  #     end
+  #   end
+  #   puts "File extracted successfully."
+  # rescue StandardError => e
+  #   puts "Error during extraction: #{e.message}"
+  #   exit(1)
+  # end
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
