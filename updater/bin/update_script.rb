@@ -519,6 +519,7 @@ end
 clone = false
 # $package_manager == "nuget"
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
 fetcher_args = {
   source: $source,
   credentials: $options[:credentials],
