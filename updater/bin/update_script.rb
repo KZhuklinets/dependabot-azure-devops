@@ -510,9 +510,6 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
-puts "source '#{$source}'"
-puts "creds '#{$options[:credentials]}'"
-
 ##############################
 # Fetch the dependency files #
 ##############################
@@ -527,7 +524,7 @@ fetcher_args = {
 fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 if clone
   puts "Cloning repository into #{$options[:repo_contents_path]}"
-  # fetcher.clone_repo_contents
+  fetcher.clone_repo_contents
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
@@ -535,7 +532,7 @@ files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
-$options[:repo_contents_path] = "/home/dependabot/dependabot-updater/tmp/CNS%20Connect"
+$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
 puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
 ##############################
 # Parse the dependency files #
