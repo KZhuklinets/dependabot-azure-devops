@@ -516,7 +516,8 @@ end
 ##############################
 # Fetch the dependency files #
 ##############################
-clone = $package_manager == "nuget"
+clone = false
+# $package_manager == "nuget"
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 fetcher_args = {
   source: $source,
