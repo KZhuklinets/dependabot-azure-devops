@@ -110,7 +110,7 @@ jobs:
         echo "GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}"
         echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
         echo "GITVERSION_SHORT_SHA: ${{ steps.gitversion.outputs.shortSha }}"
-        echo "GITVERSION_NUGET_VERSION_V2: ${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+        echo "GITVERSION_NUGET_VERSION_V2: ${{ steps.gitversion.outputs.fullSemVer }}"
         echo "GITVERSION_MAJOR: ${{ steps.gitversion.outputs.major }}"
         echo "GITVERSION_MINOR: ${{ steps.gitversion.outputs.minor }}"
       
@@ -129,7 +129,7 @@ jobs:
         --label com.github.image.source.branch=${{ github.ref }} \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.shortSha }}" \
-        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.nuGetVersionV2 }}" \
+        -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.fullSemVer }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major}}.${{ steps.gitversion.outputs.minor }}" \
         -t "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.major }}" \
         --cache-from ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest \
