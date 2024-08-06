@@ -558,9 +558,7 @@ File.binwrite(zip_file_path, response.body)
 
 Zip::File.open(zip_file_path) do |zip_file|
   zip_file.each do |entry|
-    entry_path = File.join(extract_path, entry.name)
-    FileUtils.mkdir_p(File.dirname(entry_path))
-    zip_file.extract(entry, entry_path) unless File.exist?(entry_path)
+    entry.extract(File.join($options[:repo_contents_path], entry.name)) { true }
   end
 end
 ##############################
