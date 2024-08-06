@@ -534,7 +534,7 @@ if clone
   puts "url = #{url}"
   auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
-  config = "-c http.extraheader='AUTHORIZATION: bearer #{auth_token}'"
+  config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
   clone_options = StringIO.new
   clone_options << "--no-tags --depth 1"
   clone_options << " --recurse-submodules --shallow-submodules"
