@@ -524,11 +524,10 @@ fetcher_args = {
   options: $options[:updater_options]
 }
 if clone
-  puts "Cloning repository into #{$options[:repo_contents_path]}"
   # fetcher.clone_repo_contents
   # Custom cloning, built-in doesn't work because of authentication
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
-  puts "repo_contents_path = #{repo_contents_path}"
+  puts "Cloning repository into #{repo_contents_path}"
   repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
                    "&$format=zip&download=true"
   repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
@@ -586,6 +585,8 @@ dependencies = parser.parse
 puts "Found #{dependencies.count(&:top_level?)} dependencies"
 dependencies.select(&:top_level?).each { |d| puts " - #{d.name} (#{d.version})" }
 
+# Need to have this line here - otherwise if it is filled then fetcher.files tries to clone in a wrong way
+$options[:repo_contents_path] = nil
 ################################################
 # Get active pull requests for this repository #
 ################################################
