@@ -533,22 +533,18 @@ if clone
   url = $api_endpoint + repo_api_path
   puts "url = #{url}"
   auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
-  
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
   clone_options = StringIO.new
   clone_options << "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
   clone_options << " --no-tags --depth 1"
   clone_options << " --recurse-submodules --shallow-submodules"
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
-
   puts "Cloning repository into #{repo_contents_path}"
-  
   SharedHelpers.run_shell_command(
     <<~CMD
       git clone #{clone_options.string} #{url} #{repo_contents_path}
     CMD
   )
-  
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
   # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
