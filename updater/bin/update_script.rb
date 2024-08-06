@@ -538,9 +538,10 @@ files.each { |f| puts " - #{f.path}" }
 $options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
 puts "$options[:repo_contents_path] = #{$options[:repo_contents_path]}"
 
-repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}&$format=zip&download=true"
-repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" +
-                 "#{$options[:azure_repository]}/items?#{repo_api_query}"
+repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
+                 "&$format=zip&download=true"
+repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
+                "#{$options[:azure_repository]}/items?#{repo_api_query}"
 url = $api_endpoint + repo_api_path
 puts "url = #{url}"
 ##############################
