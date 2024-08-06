@@ -9,8 +9,6 @@ require "json"
 require "logger"
 require "dependabot/logger"
 require "dependabot/shared_helpers"
-require "zip"
-require "base64"
 
 # require "git"
 
@@ -543,7 +541,7 @@ if clone
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
   puts "Cloning repository into #{repo_contents_path}"
   puts "git clone #{clone_options.string} #{url} #{repo_contents_path}"
-  puts "encoded_token = #{encoded_token}"
+
   Dependabot::SharedHelpers.run_shell_command(
     <<~CMD
       git #{config} clone #{clone_options.string} #{url} #{repo_contents_path}
