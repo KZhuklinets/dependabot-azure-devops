@@ -549,7 +549,7 @@ auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
 temp_dir = File.join(Dir.pwd, "tmp")
 zip_file_path = File.join(temp_dir, "downloaded.zip")
 puts "zip_file_path = #{zip_file_path}"
-    
+
 FileUtils.mkdir_p(temp_dir)
 
 response = Excon.get(url, headers: { "Authorization" => "Bearer #{auth_token}" })
