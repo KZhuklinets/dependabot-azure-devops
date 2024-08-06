@@ -544,6 +544,26 @@ repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_a
                 "#{$options[:azure_repository]}/items?#{repo_api_query}"
 url = $api_endpoint + repo_api_path
 puts "url = #{url}"
+
+auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
+temp_dir = File.join(Dir.pwd, 'tmp')
+zip_file_path = File.join(temp_dir, 'downloaded.zip')
+puts "zip_file_path = #{zip_file_path}"
+    
+FileUtils.mkdir_p(temp_dir)
+
+response = Excon.get(url, headers: { 'Authorization' => "Bearer #{auth_token}" })
+
+File.open(zip_file_path, 'wb') do |file|
+  file.write(response.body)
+end
+
+Zip::File.open(zip_file_path) do |zip_file|
+  zip_file.each do |entry|
+    entry_path = File.join(extract_path, entry.name)
+    FileUtils.mkdir_p(File.dirname(entry_path))
+    zip_file.extract(entry, entry_path) unless File.exist?(entry_path)
+  end
 ##############################
 # Parse the dependency files #
 ##############################
