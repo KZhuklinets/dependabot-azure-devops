@@ -533,7 +533,7 @@ if clone
                   "#{$options[:azure_repository]}"
   url = $api_endpoint + repo_api_path
   puts "url = #{url}"
-  auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
+  # auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
   clone_options = StringIO.new
   # clone_options << "--config http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
