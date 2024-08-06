@@ -63,12 +63,12 @@ jobs:
         fetch-depth: 0 # Required for GitVersion
 
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.0.0
+      uses: gittools/actions/gitversion/setup@v1
       with:
-        versionSpec: '6.x'
+        versionSpec: '5.x'
 
     - name: Determine Version
-      uses: gittools/actions/gitversion/execute@v3.0.0
+      uses: gittools/actions/gitversion/execute@v1
       id: gitversion
       with:
         useConfigFile: true
@@ -106,7 +106,6 @@ jobs:
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg ECOSYSTEM=${{ matrix.suite.ecosystem }} \
         --build-arg BASE_VERSION=${{ steps.docker-base-version.outputs.version }} \
-        --build-arg DEPENDABOT_UPDATER_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }} \
         --label com.github.image.run.id=${{ github.run_id }} \
         --label com.github.image.run.number=${{ github.run_number }} \
         --label com.github.image.job.id=${{ github.job }} \
@@ -132,7 +131,7 @@ jobs:
 
     - name: Push image (NuGetVersionV2)
       if: ${{ !startsWith(github.ref, 'refs/pull') }}
-      run: docker push "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.fullSemVer }}"
+      run: docker push "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.gitversion.outputs.nuGetVersionV2 }}"
 
     - name: Push image (major, minor)
       if: startsWith(github.ref, 'refs/tags')
