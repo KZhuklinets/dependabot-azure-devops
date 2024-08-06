@@ -537,8 +537,8 @@ if clone
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
   clone_options = StringIO.new
   clone_options << "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
-  clone_options << " --no-tags --depth 1"
-  clone_options << " --recurse-submodules --shallow-submodules"
+  # clone_options << " --no-tags --depth 1"
+  # clone_options << " --recurse-submodules --shallow-submodules"
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
   puts "Cloning repository into #{repo_contents_path}"
   puts "git clone #{clone_options.string} #{url} #{repo_contents_path}"
