@@ -541,7 +541,7 @@ if clone
   clone_options << "--no-tags --depth 1"
   clone_options << "--recurse-submodules --shallow-submodules"
   clone_options << "--branch #{$options[:branch]} --single-branch" if $options[:branch]
-  clone_options_string = clone_options.join(' ')
+  clone_options_string = clone_options.join(" ")
   # Construct the full git command
   git_command = "git #{config} clone #{clone_options_string} #{url} #{repo_contents_path}"
   # Output for debugging
