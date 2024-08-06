@@ -543,9 +543,9 @@ if clone
   puts "Cloning repository into #{repo_contents_path}"
   puts "git clone #{clone_options.string} #{url} #{repo_contents_path}"
   Dependabot::SharedHelpers.run_shell_command(
-                <<~CMD
-                  git clone #{source.url} #{path}
-                CMD
+                  <<~CMD
+                    git clone #{source.url} #{path}
+                  CMD
               )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
