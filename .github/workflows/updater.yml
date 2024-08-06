@@ -99,6 +99,21 @@ jobs:
         echo "Using dependabot-updater image tag '$tag_sha' (v$tag_name)"
         echo "version=$tag_sha" >> $GITHUB_OUTPUT
 
+    - name: Display Variables
+      run: |
+        echo "ECOSYSTEM: ${{ matrix.suite.ecosystem }}"
+        echo "GITHUB_RUN_ID: ${{ github.run_id }}"
+        echo "GITHUB_RUN_NUMBER: ${{ github.run_number }}"
+        echo "GITHUB_JOB: ${{ github.job }}"
+        echo "GITHUB_SHA: ${{ github.sha }}"
+        echo "GITHUB_REF: ${{ github.ref }}"
+        echo "GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}"
+        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
+        echo "GITVERSION_SHORT_SHA: ${{ steps.gitversion.outputs.shortSha }}"
+        echo "GITVERSION_NUGET_VERSION_V2: ${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+        echo "GITVERSION_MAJOR: ${{ steps.gitversion.outputs.major }}"
+        echo "GITVERSION_MINOR: ${{ steps.gitversion.outputs.minor }}"
+      
     - name: Build image
       run: |
         docker build \
