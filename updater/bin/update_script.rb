@@ -537,14 +537,16 @@ if clone
   repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
   clone_options = StringIO.new
   clone_options << "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
-  # clone_options << " --no-tags --depth 1"
-  # clone_options << " --recurse-submodules --shallow-submodules"
+  clone_options << " --no-tags --depth 1"
+  clone_options << " --recurse-submodules --shallow-submodules"
   clone_options << " --branch #{$options[:branch]} --single-branch" if $options[:branch]
   puts "Cloning repository into #{repo_contents_path}"
   puts "git clone #{clone_options.string} #{url} #{repo_contents_path}"
-  command = "git clone -c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\"" \
-            " --branch #{$options[:branch]} #{url} #{repo_contents_path}"
-  Dependabot::SharedHelpers.run_shell_command(command)
+  Dependabot::SharedHelpers.run_shell_command(
+                <<~CMD
+                  git clone #{source.url} #{path}
+                CMD
+              )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
   # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
