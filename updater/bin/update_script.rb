@@ -526,32 +526,32 @@ fetcher_args = {
   options: $options[:updater_options]
 }
 if clone
-  # fetcher.clone_repo_contents
+  fetcher.clone_repo_contents
   # Custom cloning, built-in doesn't work because of authentication
-  repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/" \
-                  "#{$options[:azure_repository]}"
-  url = $api_endpoint + repo_api_path
-  puts "url = #{url}"
-  auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
-  repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
-  # Construct the config string
-  config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
-  # Construct the clone options string
-  clone_options = []
-  clone_options << "--no-tags --depth 1"
-  clone_options << "--recurse-submodules --shallow-submodules"
-  clone_options << "--branch #{$options[:branch]} --single-branch" if $options[:branch]
-  clone_options_string = clone_options.join(" ")
-  # Construct the full git command
-  git_command = "git #{config} clone #{clone_options_string} #{url} #{repo_contents_path}"
-  # Output for debugging
-  puts "Cloning repository into #{repo_contents_path}"
-  puts git_command
-  # Run the shell command
-  Dependabot::SharedHelpers.run_shell_command(
-    git_command,
-    allow_unsafe_shell_command: true
-  )
+  # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/" \
+  #                 "#{$options[:azure_repository]}"
+  # url = $api_endpoint + repo_api_path
+  # puts "url = #{url}"
+  # auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
+  # repo_contents_path ||= File.expand_path(File.join("tmp", $repo_name.split("/")))
+  # # Construct the config string
+  # config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
+  # # Construct the clone options string
+  # clone_options = []
+  # clone_options << "--no-tags --depth 1"
+  # clone_options << "--recurse-submodules --shallow-submodules"
+  # clone_options << "--branch #{$options[:branch]} --single-branch" if $options[:branch]
+  # clone_options_string = clone_options.join(" ")
+  # # Construct the full git command
+  # git_command = "git #{config} clone #{clone_options_string} #{url} #{repo_contents_path}"
+  # # Output for debugging
+  # puts "Cloning repository into #{repo_contents_path}"
+  # puts git_command
+  # # Run the shell command
+  # Dependabot::SharedHelpers.run_shell_command(
+  #   git_command,
+  #   allow_unsafe_shell_command: true
+  # )
   # repo_api_query = "/&versionDescriptor[versionType]=branch&versionDescriptor[version]=#{$options[:branch]}" \
   #                  "&$format=zip&download=true"
   # repo_api_path = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_apis/git/repositories/" \
@@ -590,8 +590,6 @@ files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
-# Need to have this line here - otherwise if it is filled then fetcher.files tries to clone in a wrong way
-$options[:repo_contents_path] ||= File.expand_path(File.join("tmp", $repo_name.split("/"))) if clone
 ##############################
 # Parse the dependency files #
 ##############################
