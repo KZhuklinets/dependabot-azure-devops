@@ -18,6 +18,7 @@ module TingleSoftware
         def get_user_id(token = nil)
           # https://stackoverflow.com/a/53227325
           puts "auth_header = #{auth_header}"
+          puts "credentials = #{credentials}"
           response = if token
                        get_with_token(source.api_endpoint + source.organization + "/_apis/connectionData", token)
                      else
