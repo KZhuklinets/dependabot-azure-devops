@@ -487,7 +487,8 @@ $hostname = "#{$options[:azure_hostname]}:#{$options[:azure_port]}"
 #   $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
 # end
 # Full name of the repo targeted.
-$repo_name = "#{$options[:azure_virtual_directory]}/#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
+$repo_name = "#{$options[:azure_virtual_directory]}/#{$options[:azure_organization]}" \
+             "/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
 puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
