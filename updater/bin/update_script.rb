@@ -479,16 +479,45 @@ Excon.defaults[:ssl_verify_peer] = $options[:excon_ssl_verify_peer]
 ####################################################
 # Setup the hostname, protocol and port to be used #
 ####################################################
+# $options[:azure_port] = ENV["AZURE_PORT"] || ($options[:azure_protocol] == "http" ? "80" : "443")
+# $api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}:#{$options[:azure_port]}/"
+# $hostname = "#{$options[:azure_hostname]}:#{$options[:azure_port]}"
+# # unless $options[:azure_virtual_directory].empty?
+# #   $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
+# #   $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
+# # end
+# # Full name of the repo targeted.
+# $repo_name = "#{$options[:azure_virtual_directory]}/#{$options[:azure_organization]}" \
+#              "/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
+# puts "Using '#{$api_endpoint}' as API endpoint"
+# puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
+# puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
+# puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
+# puts "hostname '#{$hostname}'"
+
+# $source = Dependabot::Source.new(
+#   provider: $options[:provider],
+#   hostname: $hostname,
+#   # $options[:azure_hostname],
+#   # ENV.fetch("AZURE_HOSTNAME"),
+#   api_endpoint: $api_endpoint,
+#   repo: $repo_name,
+#   directory: $options[:directory],
+#   branch: $options[:branch]
+# )
+
+####################################################
+# Setup the hostname, protocol and port to be used #
+####################################################
 $options[:azure_port] = ENV["AZURE_PORT"] || ($options[:azure_protocol] == "http" ? "80" : "443")
 $api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}:#{$options[:azure_port]}/"
 $hostname = "#{$options[:azure_hostname]}:#{$options[:azure_port]}"
-# unless $options[:azure_virtual_directory].empty?
-#   $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
-#   $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
-# end
+unless $options[:azure_virtual_directory].empty?
+  $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
+  $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
+end
 # Full name of the repo targeted.
-$repo_name = "#{$options[:azure_virtual_directory]}/#{$options[:azure_organization]}" \
-             "/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
+$repo_name = "#{$options[:azure_organization]}/#{$options[:azure_project]}/_git/#{$options[:azure_repository]}"
 puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
@@ -497,8 +526,7 @@ puts "hostname '#{$hostname}'"
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
-  hostname: $options[:azure_hostname],
-  # ENV.fetch("AZURE_HOSTNAME"),
+  hostname: ENV.fetch("AZURE_HOSTNAME"),
   api_endpoint: $api_endpoint,
   repo: $repo_name,
   directory: $options[:directory],
