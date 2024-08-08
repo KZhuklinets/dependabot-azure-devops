@@ -527,6 +527,7 @@ fetcher_args = {
   repo_contents_path: $options[:repo_contents_path],
   options: $options[:updater_options]
 }
+fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 if clone
   fetcher.clone_repo_contents
   # Custom cloning, built-in doesn't work because of authentication
@@ -587,7 +588,7 @@ if clone
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
-fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
+
 files = fetcher.files
 commit = fetcher.commit
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
