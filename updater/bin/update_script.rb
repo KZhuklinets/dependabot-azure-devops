@@ -515,6 +515,13 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
+config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
+git_command = "git #{config}"
+Dependabot::SharedHelpers.run_shell_command(
+  git_command,
+  allow_unsafe_shell_command: true
+)
+
 azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
   source: $source,
   credentials: $options[:credentials]
