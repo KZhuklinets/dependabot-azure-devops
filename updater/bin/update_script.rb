@@ -515,6 +515,7 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
+auth_token = ENV.fetch("AZURE_ACCESS_TOKEN", "test")
 config = "-c http.extraheader=\"AUTHORIZATION: bearer #{auth_token}\""
 git_command = "git #{config}"
 Dependabot::SharedHelpers.run_shell_command(
