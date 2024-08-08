@@ -520,6 +520,7 @@ azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
   credentials: $options[:credentials]
 )
 user_id1 = azure_client1.get_user_id
+puts "user_id1 '#{user_id1}' requirements update strategy"
 ##############################
 # Fetch the dependency files #
 ##############################
