@@ -515,6 +515,11 @@ if $options[:requirements_update_strategy]
   puts "Using '#{$options[:requirements_update_strategy]}' requirements update strategy"
 end
 
+azure_client1 = TingleSoftware::Dependabot::Clients::Azure.for_source(
+  source: $source,
+  credentials: $options[:credentials]
+)
+user_id1 = azure_client1.get_user_id
 ##############################
 # Fetch the dependency files #
 ##############################
