@@ -690,7 +690,7 @@ dependencies.select(&:top_level?).each do |dep|
     if checker.vulnerable?
       begin
         lowest_security_fix_version = checker.lowest_resolvable_security_fix_version
-    
+        
         if lowest_security_fix_version
           puts "#{dep.name} #{dep.version} is vulnerable. Earliest non-vulnerable is #{lowest_security_fix_version}"
         else
