@@ -688,10 +688,16 @@ dependencies.select(&:top_level?).each do |dep|
 
     # For vulnerable dependencies
     if checker.vulnerable?
-      if checker.lowest_resolvable_security_fix_version
-        puts "#{dep.name} #{dep.version} is vulnerable. Earliest non-vulnerable is " \
-             "#{checker.lowest_resolvable_security_fix_version}"
-      else
+      begin
+        lowest_security_fix_version = checker.lowest_resolvable_security_fix_version
+    
+        if lowest_security_fix_version
+          puts "#{dep.name} #{dep.version} is vulnerable. Earliest non-vulnerable is #{lowest_security_fix_version}"
+        else
+          puts "#{dep.name} #{dep.version} is vulnerable. Can't find non-vulnerable version. 🚨"
+        end
+      rescue TypeError => e
+        # Handle the type error, which occurs when the return type is not as expected
         puts "#{dep.name} #{dep.version} is vulnerable. Can't find non-vulnerable version. 🚨"
       end
     end
