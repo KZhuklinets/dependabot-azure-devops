@@ -482,6 +482,7 @@ Excon.defaults[:ssl_verify_peer] = $options[:excon_ssl_verify_peer]
 $options[:azure_port] = ENV["AZURE_PORT"] || ($options[:azure_protocol] == "http" ? "80" : "443")
 $api_endpoint = "#{$options[:azure_protocol]}://#{$options[:azure_hostname]}:#{$options[:azure_port]}/"
 $hostname = "#{$options[:azure_hostname]}:#{$options[:azure_port]}"
+
 unless $options[:azure_virtual_directory].empty?
   $api_endpoint = $api_endpoint + "#{$options[:azure_virtual_directory]}/"
   $hostname = $hostname + "/#{$options[:azure_virtual_directory]}"
@@ -533,6 +534,7 @@ end
 
 files = fetcher.files
 commit = fetcher.commit
+
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 ##############################
