@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 # This class implements our strategy for iterating over all of the dependencies
@@ -27,6 +27,10 @@ module Dependabot
           @error_handler = error_handler
           # TODO: Collect @created_pull_requests on the Job object?
           @created_pull_requests = []
+
+          return unless job.source.directory.nil? && job.source.directories.count == 1
+
+          job.source.directory = job.source.directories.first
         end
 
         def perform
@@ -37,11 +41,11 @@ module Dependabot
 
         private
 
-        attr_reader :job,
-                    :service,
-                    :dependency_snapshot,
-                    :error_handler,
-                    :created_pull_requests
+        attr_reader :job
+        attr_reader :service
+        attr_reader :dependency_snapshot
+        attr_reader :error_handler
+        attr_reader :created_pull_requests
 
         def dependencies
           if dependency_snapshot.dependencies.any? && dependency_snapshot.allowed_dependencies.none?
@@ -58,6 +62,10 @@ module Dependabot
 
         def check_and_create_pr_with_error_handling(dependency)
           check_and_create_pull_request(dependency)
+        rescue URI::InvalidURIError => e
+          msg = e.class.to_s + " with message: " + e.message
+          e = Dependabot::DependencyFileNotResolvable.new(msg)
+          error_handler.handle_dependency_error(error: e, dependency: dependency)
         rescue Dependabot::InconsistentRegistryResponse => e
           error_handler.log_dependency_error(
             dependency: dependency,
@@ -66,11 +74,12 @@ module Dependabot
             error_detail: e.message
           )
         rescue StandardError => e
-          error_handler.handle_dependency_error(error: e, dependency: dependency)
+          process_dependency_error(e, dependency)
         end
 
         # rubocop:disable Metrics/AbcSize
         # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/PerceivedComplexity
         def check_and_create_pull_request(dependency)
           checker = update_checker_for(dependency, raise_on_ignored: raise_on_ignored?(dependency))
 
@@ -99,6 +108,10 @@ module Dependabot
             requirements_to_unlock: requirements_to_unlock
           )
 
+          if updated_deps.empty?
+            raise "Dependabot found some dependency requirements to unlock, yet it failed to update any dependencies"
+          end
+
           if (existing_pr = existing_pull_request(updated_deps))
             deps = existing_pr.map do |dep|
               if dep.fetch("dependency-removed", false)
@@ -126,8 +139,14 @@ module Dependabot
             updated_dependencies: updated_deps,
             change_source: checker.dependency
           )
+
+          if dependency_change.updated_dependency_files.empty?
+            raise "UpdateChecker found viable dependencies to be updated, but FileUpdater failed to update any files"
+          end
+
           create_pull_request(dependency_change)
         end
+        # rubocop:enable Metrics/PerceivedComplexity
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/AbcSize
 
@@ -160,6 +179,15 @@ module Dependabot
             "Checking if #{dependency.name} #{dependency.version} needs updating"
           )
           job.log_ignore_conditions_for(dependency)
+        end
+
+        def process_dependency_error(error, dependency)
+          if error.class.to_s.include?("RegistryError")
+            ex = Dependabot::DependencyFileNotResolvable.new(error.message)
+            error_handler.handle_dependency_error(error: ex, dependency: dependency)
+          else
+            error_handler.handle_dependency_error(error: error, dependency: dependency)
+          end
         end
 
         def all_versions_ignored?(dependency, checker)
@@ -215,7 +243,7 @@ module Dependabot
           return unless checker.respond_to?(:requirements_update_strategy)
 
           Dependabot.logger.info(
-            "Requirements update strategy #{checker.requirements_update_strategy}"
+            "Requirements update strategy #{checker.requirements_update_strategy&.serialize}"
           )
         end
 
@@ -226,6 +254,7 @@ module Dependabot
             .reject { |dep| dep.name == dependency_name }
             .any? do |dep|
               next true if existing_pull_request([dep])
+              next false if dep.previous_requirements.nil?
 
               original_peer_dep = ::Dependabot::Dependency.new(
                 name: dep.name,

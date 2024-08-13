@@ -22,7 +22,7 @@
       "type": "string",
       "defaultValue": "[[]",
       "metadata": {
-        "description": "JSON array string fo projects to setup. E.g. [{\"url\":\"https://dev.azure.com/tingle/dependabot\",\"token\":\"dummy\",\"AutoComplete\":true}]"
+        "description": "JSON array string for projects to setup. E.g. [{\"url\":\"https://dev.azure.com/tingle/dependabot\",\"token\":\"dummy\",\"AutoComplete\":true}]"
       }
     },
     "githubToken": {
@@ -34,7 +34,7 @@
     },
     "imageTag": {
       "type": "string",
-      "defaultValue": "#{GITVERSION_NUGETVERSIONV2}#",
+      "defaultValue": "#{IMAGE_TAG}#",
       "minLength": 1,
       "metadata": {
         "description": "Tag of the docker images."
@@ -66,17 +66,9 @@
       }
     ],
     "fileShares": [
-      {
-        "name": "certs"
-      },
-      {
-        "name": "distributed-locks",
-        "writeable": true
-      },
-      {
-        "name": "working-dir",
-        "writeable": true
-      }
+      "certs",
+      "distributed-locks",
+      "working-dir"
     ],
     "storageAccountName": "[replace(replace(if(equals(parameters('name'), 'dependabot'), 'dependabotstore', parameters('name')), '-', ''), '_', '')]",
     "sqlServerAdministratorLogin": "[uniqueString(resourceGroup().id)]",
@@ -152,16 +144,27 @@
       ]
     },
     {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2023-03-01",
+      "name": "[format('{0}/{1}', parameters('name'), 'Workflow:UpdaterImageTags:nuget$Production')]",
+      "properties": {
+        "value": "1.24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('name'))]"
+      ]
+    },
+    {
       "copy": {
         "name": "shares",
         "count": "[length(variables('fileShares'))]"
       },
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
       "apiVersion": "2022-09-01",
-      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', variables('fileShares')[copyIndex()].name)]",
+      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', variables('fileShares')[copyIndex()])]",
       "properties": {
-        "accessTier": "[if(contains(variables('fileShares')[copyIndex()], 'accessTier'), variables('fileShares')[copyIndex()].accessTier, 'TransactionOptimized')]",
-        "shareQuota": "[if(contains(variables('fileShares')[copyIndex()], 'shareQuota'), variables('fileShares')[copyIndex()].shareQuota, 1)]"
+        "accessTier": "TransactionOptimized",
+        "shareQuota": 1
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
@@ -174,13 +177,13 @@
       },
       "type": "Microsoft.App/managedEnvironments/storages",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}', parameters('name'), variables('fileShares')[copyIndex()].name)]",
+      "name": "[format('{0}/{1}', parameters('name'), variables('fileShares')[copyIndex()])]",
       "properties": {
         "azureFile": {
           "accountName": "[variables('storageAccountName')]",
           "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').keys[0].value]",
-          "shareName": "[variables('fileShares')[copyIndex()].name]",
-          "accessMode": "[if(and(contains(variables('fileShares')[copyIndex()], 'writeable'), bool(variables('fileShares')[copyIndex()].writeable)), 'ReadWrite', 'ReadOnly')]"
+          "shareName": "[variables('fileShares')[copyIndex()]]",
+          "accessMode": "ReadWrite"
         }
       },
       "dependsOn": [
@@ -542,6 +545,16 @@
                 "memory": "0.5Gi"
               },
               "probes": [
+                {
+                  "type": "Startup",
+                  "httpGet": {
+                    "port": 8080,
+                    "path": "/liveness"
+                  },
+                  "initialDelaySeconds": 10,
+                  "timeoutSeconds": 100,
+                  "failureThreshold": 10
+                },
                 {
                   "type": "Liveness",
                   "httpGet": {

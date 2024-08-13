@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "dependabot/updater/operations/create_group_update_pull_request"
@@ -18,28 +18,50 @@ module Dependabot
   class Updater
     module Operations
       class GroupUpdateAllVersions
+        extend T::Sig
         include GroupUpdateCreation
 
-        def self.applies_to?(job:)
-          return false if job.security_updates_only?
+        sig { params(job: Dependabot::Job).returns(T::Boolean) }
+        def self.applies_to?(job:) # rubocop:disable Metrics/PerceivedComplexity
           return false if job.updating_a_pull_request?
-          return false if job.dependencies&.any?
+          if Dependabot::Experiments.enabled?(:grouped_security_updates_disabled) && job.security_updates_only?
+            return false
+          end
 
-          job.dependency_groups&.any?
+          return true if job.source.directories && T.must(job.source.directories).count > 1
+
+          if job.security_updates_only?
+            return true if job.dependencies && T.must(job.dependencies).count > 1
+            return true if job.dependency_groups.any? { |group| group["applies-to"] == "security-updates" }
+
+            return false
+          end
+
+          job.dependency_groups.any?
         end
 
+        sig { returns(Symbol) }
         def self.tag_name
           :group_update_all_versions
         end
 
+        sig do
+          params(
+            service: Dependabot::Service,
+            job: Dependabot::Job,
+            dependency_snapshot: Dependabot::DependencySnapshot,
+            error_handler: Dependabot::Updater::ErrorHandler
+          ).void
+        end
         def initialize(service:, job:, dependency_snapshot:, error_handler:)
           @service = service
           @job = job
           @dependency_snapshot = dependency_snapshot
           @error_handler = error_handler
-          @dependencies_handled = Set.new
+          @dependencies_handled = T.let(Set.new, T::Set[String])
         end
 
+        sig { void }
         def perform
           if dependency_snapshot.groups.any?
             run_grouped_dependency_updates
@@ -65,12 +87,20 @@ module Dependabot
 
         private
 
-        attr_reader :job,
-                    :service,
-                    :dependency_snapshot,
-                    :error_handler
+        sig { returns(Dependabot::Job) }
+        attr_reader :job
 
-        def run_grouped_dependency_updates # rubocop:disable Metrics/AbcSize
+        sig { returns(Dependabot::Service) }
+        attr_reader :service
+
+        sig { returns(Dependabot::DependencySnapshot) }
+        attr_reader :dependency_snapshot
+
+        sig { returns(Dependabot::Updater::ErrorHandler) }
+        attr_reader :error_handler
+
+        sig { returns(T::Array[Dependabot::DependencyGroup]) }
+        def run_grouped_dependency_updates
           Dependabot.logger.info("Starting grouped update job for #{job.source.repo}")
           Dependabot.logger.info("Found #{dependency_snapshot.groups.count} group(s).")
 
@@ -82,10 +112,7 @@ module Dependabot
               Dependabot.logger.info(
                 "Deferring creation of a new pull request. The existing pull request will update in a separate job."
               )
-              # add the dependencies in the group so individual updates don't try to update them
-              dependency_snapshot.add_handled_dependencies(
-                dependencies_in_existing_pr_for_group(group).map { |d| d["dependency-name"] }
-              )
+              dependency_snapshot.mark_group_handled(group)
               next
             end
 
@@ -93,18 +120,14 @@ module Dependabot
           end
 
           groups_without_pr.each do |group|
-            result = run_update_for(group)
-            if result
-              # Add the actual updated dependencies to the handled list so they don't get updated individually.
-              dependency_snapshot.add_handled_dependencies(result.updated_dependencies.map(&:name))
-            else
-              # The update failed, add the suspected dependencies to the handled list so they don't update individually.
-              dependency_snapshot.add_handled_dependencies(group.dependencies.map(&:name))
-            end
+            dependency_change = run_grouped_update_for(group)
+            # The update failed, add the suspected dependencies to the handled list so they don't update individually.
+            dependency_snapshot.mark_group_handled(group) if dependency_change.nil?
           end
         end
 
-        def run_update_for(group)
+        sig { params(group: Dependabot::DependencyGroup).returns(T.nilable(Dependabot::DependencyChange)) }
+        def run_grouped_update_for(group)
           Dependabot::Updater::Operations::CreateGroupUpdatePullRequest.new(
             service: service,
             job: job,
@@ -114,15 +137,31 @@ module Dependabot
           ).perform
         end
 
+        sig { void }
         def run_ungrouped_dependency_updates
-          return if dependency_snapshot.ungrouped_dependencies.empty?
+          if job.source.directories.nil?
+            return if dependency_snapshot.ungrouped_dependencies.empty?
 
-          Dependabot::Updater::Operations::UpdateAllVersions.new(
-            service: service,
-            job: job,
-            dependency_snapshot: dependency_snapshot,
-            error_handler: error_handler
-          ).perform
+            Dependabot::Updater::Operations::UpdateAllVersions.new(
+              service: service,
+              job: job,
+              dependency_snapshot: dependency_snapshot,
+              error_handler: error_handler
+            ).perform
+          else
+            T.must(job.source.directories).each do |directory|
+              job.source.directory = directory
+              dependency_snapshot.current_directory = directory
+              next if dependency_snapshot.ungrouped_dependencies.empty?
+
+              Dependabot::Updater::Operations::UpdateAllVersions.new(
+                service: service,
+                job: job,
+                dependency_snapshot: dependency_snapshot,
+                error_handler: error_handler
+              ).perform
+            end
+          end
         end
       end
     end

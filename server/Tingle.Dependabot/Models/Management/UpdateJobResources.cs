@@ -5,6 +5,9 @@ namespace Tingle.Dependabot.Models.Management;
 
 public class UpdateJobResources
 {
+    // the minimum is 0.25vCPU and 0.5GB but we need more because a lot is happening in the container
+    private static readonly UpdateJobResources Default = new(cpu: 0.5, memory: 1);
+
     public UpdateJobResources() { } // required for deserialization
 
     public UpdateJobResources(double cpu, double memory)
@@ -33,13 +36,15 @@ public class UpdateJobResources
     {
         return ecosystem switch
         {
-            //"nuget" => new(cpu: 0.25, memory: 0.2),
-            //"gitsubmodule" => new(cpu: 0.1, memory: 0.2),
-            //"terraform" => new(cpu: 0.25, memory: 1),
-            //"npm" => new(cpu: 0.25, memory: 1),
-            _ => new UpdateJobResources(cpu: 0.25, memory: 0.5), // the minimum
+            "npm" => Default * 2,
+            "yarn" => Default * 2,
+            "pnpm" => Default * 2,
+            _ => Default,
         };
     }
+
+    public static UpdateJobResources operator *(UpdateJobResources resources, double factor) => new(resources.Cpu * factor, resources.Memory * factor);
+    public static UpdateJobResources operator /(UpdateJobResources resources, double factor) => new(resources.Cpu / factor, resources.Memory / factor);
 
     public static implicit operator AppContainerResources(UpdateJobResources resources)
     {

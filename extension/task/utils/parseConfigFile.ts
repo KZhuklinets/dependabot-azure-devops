@@ -15,7 +15,7 @@ import axios from "axios";
 /**
  * Parse the dependabot config YAML file to specify update configuration
  *
- * The file should be located at '/.github/dependabot.yml' or '/.github/dependabot.yaml'
+ * The file should be located at '/.azuredevops/dependabot.yml' or '/.github/dependabot.yml'
  *
  * To view YAML file format, visit
  * https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#allow
@@ -25,6 +25,9 @@ import axios from "axios";
  */
 async function parseConfigFile(variables: ISharedVariables): Promise<IDependabotConfig> {
   const possibleFilePaths = [
+    "/.azuredevops/dependabot.yml",
+    "/.azuredevops/dependabot.yaml",
+
     "/.github/dependabot.yaml",
     "/.github/dependabot.yml",
   ];
@@ -162,6 +165,7 @@ function parseUpdates(config: any): IDependabotUpdate[] {
     var dependabotUpdate: IDependabotUpdate = {
       packageEcosystem: update["package-ecosystem"],
       directory: update["directory"],
+      directories: update["directories"] || [],
 
       openPullRequestsLimit: update["open-pull-requests-limit"],
       registries: update["registries"] || [],
@@ -186,13 +190,16 @@ function parseUpdates(config: any): IDependabotUpdate[] {
       ignore: update["ignore"] ? JSON.stringify(update["ignore"]) : undefined,
       labels: update["labels"] ? JSON.stringify(update["labels"]) : undefined,
       reviewers: update["reviewers"]
-        ? JSON.stringify(update["reviewers"])
+        ? update["reviewers"]
         : undefined,
       assignees: update["assignees"]
-        ? JSON.stringify(update["assignees"])
+        ? update["assignees"]
         : undefined,
       commitMessage: update["commit-message"]
         ? JSON.stringify(update["commit-message"])
+        : undefined,
+      groups: update["groups"]
+        ? JSON.stringify(update["groups"])
         : undefined,
     };
 
@@ -210,9 +217,9 @@ function parseUpdates(config: any): IDependabotUpdate[] {
       dependabotUpdate.openPullRequestsLimit = 5;
     }
 
-    if (!dependabotUpdate.directory) {
+    if (!dependabotUpdate.directory && dependabotUpdate.directories.length === 0) {
       throw new Error(
-        "The value 'directory' in dependency update config is missing"
+        "The values 'directory' and 'directories' in dependency update config is missing, you must specify at least one"
       );
     }
 
@@ -278,7 +285,7 @@ function parseRegistries(config: any): Record<string, IDependabotRegistry> {
     }
 
     // parse username, password, key, and token while replacing tokens where necessary
-    parsed.username = registryConfig["username"];
+    parsed.username = convertPlaceholder(registryConfig["username"]);
     parsed.password = convertPlaceholder(registryConfig["password"]);
     parsed.key = convertPlaceholder(registryConfig["key"]);
     parsed.token = convertPlaceholder(registryConfig["token"]);

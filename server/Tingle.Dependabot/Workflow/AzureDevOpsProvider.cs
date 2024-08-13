@@ -6,13 +6,12 @@ using Tingle.Dependabot.Models.Management;
 
 namespace Tingle.Dependabot.Workflow;
 
-public class AzureDevOpsProvider
+public class AzureDevOpsProvider(HttpClient httpClient, IOptions<WorkflowOptions> optionsAccessor)
 {
     // Possible/allowed paths for the configuration files in a repository.
     private static readonly IReadOnlyList<string> ConfigurationFilePaths = new[] {
-        // TODO: restore checks in .azuredevops folder once either the code can check that folder or we are passing ignore conditions via update_jobs API
-        //".azuredevops/dependabot.yml",
-        //".azuredevops/dependabot.yaml",
+        ".azuredevops/dependabot.yml",
+        ".azuredevops/dependabot.yaml",
 
         ".github/dependabot.yml",
         ".github/dependabot.yaml",
@@ -26,14 +25,7 @@ public class AzureDevOpsProvider
         ("ms.vss-code.git-pullrequest-comment-event", "2.0"),
     ];
 
-    private readonly HttpClient httpClient;
-    private readonly WorkflowOptions options;
-
-    public AzureDevOpsProvider(HttpClient httpClient, IOptions<WorkflowOptions> optionsAccessor)
-    {
-        this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        options = optionsAccessor?.Value ?? throw new ArgumentNullException(nameof(optionsAccessor));
-    }
+    private readonly WorkflowOptions options = optionsAccessor?.Value ?? throw new ArgumentNullException(nameof(optionsAccessor));
 
     public async Task<List<string>> CreateOrUpdateSubscriptionsAsync(Project project, CancellationToken cancellationToken = default)
     {
@@ -70,7 +62,7 @@ public class AzureDevOpsProvider
             Host = url.Hostname,
             Port = url.Port ?? -1,
             Path = $"{url.OrganizationName}/_apis/hooks/subscriptionsquery",
-            Query = "?api-version=7.0",
+            Query = "?api-version=7.1",
         }.Uri;
         var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = JsonContent.Create(query), };
         var subscriptions = (await SendAsync<AzdoSubscriptionsQueryResponse>(project.Token!, request, cancellationToken)).Results;
@@ -140,7 +132,7 @@ public class AzureDevOpsProvider
             Host = url.Hostname,
             Port = url.Port ?? -1,
             Path = $"{url.OrganizationName}/_apis/projects/{url.ProjectIdOrName}",
-            Query = "?api-version=7.0",
+            Query = "?api-version=7.1",
         }.Uri;
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         return await SendAsync<AzdoProject>(project.Token!, request, cancellationToken);
@@ -155,7 +147,7 @@ public class AzureDevOpsProvider
             Host = url.Hostname,
             Port = url.Port ?? -1,
             Path = $"{url.OrganizationName}/{url.ProjectIdOrName}/_apis/git/repositories",
-            Query = "?api-version=7.0",
+            Query = "?api-version=7.1",
         }.Uri;
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         var data = await SendAsync<AzdoListResponse<AzdoRepository>>(project.Token!, request, cancellationToken);
@@ -171,7 +163,7 @@ public class AzureDevOpsProvider
             Host = url.Hostname,
             Port = url.Port ?? -1,
             Path = $"{url.OrganizationName}/{url.ProjectIdOrName}/_apis/git/repositories/{repositoryIdOrName}",
-            Query = "?api-version=7.0",
+            Query = "?api-version=7.1",
         }.Uri;
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         return await SendAsync<AzdoRepository>(project.Token!, request, cancellationToken);
@@ -192,7 +184,7 @@ public class AzureDevOpsProvider
                     Host = url.Hostname,
                     Port = url.Port ?? -1,
                     Path = $"{url.OrganizationName}/{url.ProjectIdOrName}/_apis/git/repositories/{repositoryIdOrName}/items",
-                    Query = $"?path={path}&includeContent=true&latestProcessedChange=true&api-version=7.0"
+                    Query = $"?path={path}&includeContent=true&latestProcessedChange=true&api-version=7.1"
                 }.Uri;
                 var request = new HttpRequestMessage(HttpMethod.Get, uri);
                 var item = await SendAsync<AzdoRepositoryItem>(project.Token!, request, cancellationToken);

@@ -5,31 +5,17 @@ using Tingle.Dependabot.Models;
 using Tingle.Dependabot.Models.Dependabot;
 using Tingle.Dependabot.Models.Management;
 using Tingle.EventBus;
+using Tingle.Extensions.Primitives;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Tingle.Dependabot.Workflow;
 
-internal class Synchronizer
+internal class Synchronizer(MainDbContext dbContext, AzureDevOpsProvider adoProvider, IEventPublisher publisher, ILogger<Synchronizer> logger)
 {
-    private readonly MainDbContext dbContext;
-    private readonly AzureDevOpsProvider adoProvider;
-    private readonly IEventPublisher publisher;
-    private readonly ILogger logger;
-
-    private readonly IDeserializer yamlDeserializer;
-
-    public Synchronizer(MainDbContext dbContext, AzureDevOpsProvider adoProvider, IEventPublisher publisher, ILogger<Synchronizer> logger)
-    {
-        this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        this.adoProvider = adoProvider ?? throw new ArgumentNullException(nameof(adoProvider));
-        this.publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        yamlDeserializer = new DeserializerBuilder().WithNamingConvention(HyphenatedNamingConvention.Instance)
-                                                    .IgnoreUnmatchedProperties()
-                                                    .Build();
-    }
+    private readonly IDeserializer yamlDeserializer = new DeserializerBuilder().WithNamingConvention(HyphenatedNamingConvention.Instance)
+                                                                               .IgnoreUnmatchedProperties()
+                                                                               .Build();
 
     public async Task SynchronizeAsync(Project project, bool trigger, CancellationToken cancellationToken = default)
     {
@@ -196,7 +182,7 @@ internal class Synchronizer
         {
             repository = new Repository
             {
-                Id = $"repo_{KSUID.Ksuid.Generate()}",
+                Id = $"repo_{Ksuid.Generate()}",
                 Created = DateTimeOffset.UtcNow,
                 ProjectId = project.Id,
                 ProviderId = providerInfo.Id,

@@ -3,15 +3,8 @@
 namespace Tingle.Dependabot.ApplicationInsights;
 
 // from https://medium.com/@asimmon/prevent-net-application-insights-telemetry-loss-d82a06c3673f
-internal class InsightsShutdownFlushService : IHostedService
+internal class InsightsShutdownFlushService(TelemetryClient telemetryClient) : IHostedService
 {
-    private readonly TelemetryClient telemetryClient;
-
-    public InsightsShutdownFlushService(TelemetryClient telemetryClient)
-    {
-        this.telemetryClient = telemetryClient ?? throw new ArgumentNullException(nameof(telemetryClient));
-    }
-
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -20,7 +13,7 @@ internal class InsightsShutdownFlushService : IHostedService
         // Using "CancellationToken.None" ensures that the application doesn't stop until the telemetry data is flushed.
         //
         // If you want to use the "cancellationToken" argument, make sure to configure "HostOptions.ShutdownTimeout" with a sufficiently large duration,
-        // and silence the eventual "OperationCanceledException" exception. Otherwise, you will still be at risk of loosing telemetry data.
+        // and silence the eventual "OperationCanceledException" exception. Otherwise, you will still be at risk of losing telemetry data.
         var successfullyFlushed = await telemetryClient.FlushAsync(CancellationToken.None);
         if (!successfullyFlushed)
         {

@@ -3,20 +3,10 @@ import { ToolRunner } from "azure-pipelines-task-lib/toolrunner"
 import { IDependabotConfig, IDependabotRegistry, IDependabotUpdate } from "./IDependabotConfig";
 import getSharedVariables from "./utils/getSharedVariables";
 import { parseConfigFile } from "./utils/parseConfigFile";
+import { resolveAzureDevOpsIdentities } from "./utils/resolveAzureDevOpsIdentities";
 
 async function run() {
   try {
-    let useConfigFile: boolean = tl.getBoolInput("useConfigFile", true);
-    if (!useConfigFile) {
-      throw new Error(
-        `
-        Using explicit inputs is no longer supported.
-        Migrate to using a config file at .github/dependabot.yml.
-        See https://github.com/tinglesoftware/dependabot-azure-devops/tree/main/extension#usage for more information.
-        `
-      );
-    }
-
     // Checking if docker is installed
     tl.debug("Checking for docker install ...");
     tl.which("docker", true);
@@ -41,6 +31,7 @@ async function run() {
     // For each update run docker container
     for (const update of updates) {
       // Prepare the docker task
+      // tl.which throws an error if the tool is not found
       let dockerRunner: ToolRunner = tl.tool(tl.which("docker", true));
       dockerRunner.arg(["run"]); // run command
       dockerRunner.arg(["--rm"]); // remove after execution
@@ -57,9 +48,12 @@ async function run() {
       dockerRunner.arg(["-e", `DEPENDABOT_PACKAGE_MANAGER=${update.packageEcosystem}`]);
       dockerRunner.arg(["-e", `DEPENDABOT_OPEN_PULL_REQUESTS_LIMIT=${update.openPullRequestsLimit}`]); // always has a value
 
-      // Set the directory
+      // Set the directory or directories
       if (update.directory) {
         dockerRunner.arg(["-e", `DEPENDABOT_DIRECTORY=${update.directory}`]);
+      }
+      if (update.directories && update.directories.length > 0) {
+        dockerRunner.arg(["-e", `DEPENDABOT_DIRECTORIES=${JSON.stringify(update.directories)}`]);
       }
 
       // Set the target branch
@@ -110,6 +104,12 @@ async function run() {
         dockerRunner.arg(["-e", `DEPENDABOT_IGNORE_CONDITIONS=${ignore}`]);
       }
 
+      // Set the dependency groups
+      let groups = update.groups;
+      if (groups) {
+        dockerRunner.arg(["-e", `DEPENDABOT_DEPENDENCY_GROUPS=${groups}`]);
+      }
+
       // Set the commit message options
       let commitMessage = update.commitMessage;
       if (commitMessage) {
@@ -128,12 +128,14 @@ async function run() {
 
       // Set the reviewers
       if (update.reviewers) {
-        dockerRunner.arg(["-e", `DEPENDABOT_REVIEWERS=${update.reviewers}`]);
+        const reviewers = await resolveAzureDevOpsIdentities(variables.organizationUrl, update.reviewers)
+        dockerRunner.arg(["-e", `DEPENDABOT_REVIEWERS=${JSON.stringify(reviewers.map(identity  => identity.id))}`]);
       }
 
       // Set the assignees
       if (update.assignees) {
-        dockerRunner.arg(["-e", `DEPENDABOT_ASSIGNEES=${update.assignees}`]);
+        const assignees = await resolveAzureDevOpsIdentities(variables.organizationUrl, update.assignees)
+        dockerRunner.arg(["-e", `DEPENDABOT_ASSIGNEES=${JSON.stringify(assignees.map(identity  => identity.id))}`]);
       }
 
       // Set the updater options, if provided
@@ -159,6 +161,11 @@ async function run() {
       // Set skip pull requests if true
       if (variables.skipPullRequests === true) {
         dockerRunner.arg(["-e", 'DEPENDABOT_SKIP_PULL_REQUESTS=true']);
+      }
+
+      // Set skip pull requests if true
+      if (variables.commentPullRequests === true) {
+        dockerRunner.arg(["-e", 'DEPENDABOT_COMMENT_PULL_REQUESTS=true']);
       }
 
       // Set abandon Unwanted pull requests if true
@@ -227,6 +234,11 @@ async function run() {
         }
       }
 
+      // Set debug
+      if (variables.debug === true) {
+        dockerRunner.arg(["-e", 'DEPENDABOT_DEBUG=true']);
+      }
+
       // Add in extra environment variables
       variables.extraEnvironmentVariables.forEach(extraEnvVar => {
         dockerRunner.arg(["-e", extraEnvVar]);
@@ -244,7 +256,7 @@ async function run() {
       dockerRunner.arg(dockerImage);
 
       // set the script to be run
-      dockerRunner.arg('update_script');
+      dockerRunner.arg(variables.command);
 
       // Now execute using docker
       await dockerRunner.exec();

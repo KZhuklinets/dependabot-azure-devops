@@ -4,22 +4,12 @@ using Tingle.Dependabot.Models;
 using Tingle.Dependabot.Models.Management;
 using Tingle.Dependabot.Workflow;
 using Tingle.EventBus;
+using Tingle.Extensions.Primitives;
 
 namespace Tingle.Dependabot.Consumers;
 
-internal class TriggerUpdateJobsEventConsumer : IEventConsumer<TriggerUpdateJobsEvent>
+internal class TriggerUpdateJobsEventConsumer(MainDbContext dbContext, UpdateRunner updateRunner, ILogger<TriggerUpdateJobsEventConsumer> logger) : IEventConsumer<TriggerUpdateJobsEvent>
 {
-    private readonly MainDbContext dbContext;
-    private readonly UpdateRunner updateRunner;
-    private readonly ILogger logger;
-
-    public TriggerUpdateJobsEventConsumer(MainDbContext dbContext, UpdateRunner updateRunner, ILogger<TriggerUpdateJobsEventConsumer> logger)
-    {
-        this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        this.updateRunner = updateRunner ?? throw new ArgumentNullException(nameof(updateRunner));
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
     public async Task ConsumeAsync(EventContext<TriggerUpdateJobsEvent> context, CancellationToken cancellationToken)
     {
         var evt = context.Event;
@@ -85,7 +75,7 @@ internal class TriggerUpdateJobsEventConsumer : IEventConsumer<TriggerUpdateJobs
                 {
                     // we use this to create azure resources which have name restrictions
                     // alphanumeric, starts with a letter, does not contain "--", up to 32 characters
-                    Id = $"job-{FlakeId.Id.Create()}", // flake is 19 chars, total is 23 chars
+                    Id = $"job-{SequenceNumber.Generate()}", // sequence number is 19 chars, total is 23 chars
 
                     Created = DateTimeOffset.UtcNow,
                     Status = UpdateJobStatus.Scheduled,

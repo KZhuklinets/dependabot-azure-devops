@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 @description('Name of the resources. Make sure it is unique e.g. dependabotcontoso to avoid conflicts or failures')
 param name string = 'dependabot'
 
-@description('JSON array string fo projects to setup. E.g. [{"url":"https://dev.azure.com/tingle/dependabot","token":"dummy","AutoComplete":true}]')
+@description('JSON array string for projects to setup. E.g. [{"url":"https://dev.azure.com/tingle/dependabot","token":"dummy","AutoComplete":true}]')
 param projectSetups string = '[]'
 
 @description('Access token for authenticating requests to GitHub.')
@@ -14,13 +14,9 @@ param githubToken string = ''
 
 @minLength(1)
 @description('Tag of the docker images.')
-param imageTag string = '#{GITVERSION_NUGETVERSIONV2}#'
+param imageTag string = '#{IMAGE_TAG}#'
 
-var fileShares = [
-  { name: 'certs' }
-  { name: 'distributed-locks', writeable: true }
-  { name: 'working-dir', writeable: true }
-]
+var fileShares = ['certs', 'distributed-locks', 'working-dir']
 
 // dependabot is not available as of 2023-Sep-25 so we change just for the public deployment
 var storageAccountName = replace(replace((name == 'dependabot' ? 'dependabotstore' : name), '-', ''), '_', '') // remove underscores and hyphens
@@ -107,6 +103,10 @@ resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2023-0
       '${managedIdentity.id}': {/*ttk bug*/ }
     }
   }
+
+  // override the default updater image tag for nuget jobs
+  // TODO: remove this here and on Azure once the authentication issues are resolved (https://github.com/tinglesoftware/dependabot-azure-devops/issues/921)
+  resource nugetVersion 'keyValues' = { name: 'Workflow:UpdaterImageTags:nuget$Production', properties: { value: '1.24' } }
 }
 
 /* Storage Account */
@@ -129,13 +129,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     name: 'default'
 
     resource shares 'shares' = [for fs in fileShares: {
-      name: fs.name
+      name: fs
       properties: {
-        accessTier: contains(fs, 'accessTier') ? fs.accessTier : 'TransactionOptimized'
+        accessTier: 'TransactionOptimized'
         // container apps does not support NFS
         // https://github.com/microsoft/azure-container-apps/issues/717
         // enabledProtocols: contains(fs, 'enabledProtocols') ? fs.enabledProtocols : 'SMB'
-        shareQuota: contains(fs, 'shareQuota') ? fs.shareQuota : 1
+        shareQuota: 1
       }
     }]
   }
@@ -215,13 +215,13 @@ resource appEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = {
   }
 
   resource storages 'storages' = [for fs in fileShares: {
-    name: fs.name
+    name: fs
     properties: {
       azureFile: {
         accountName: storageAccount.name
         accountKey: storageAccount.listKeys().keys[0].value
-        shareName: fs.name
-        accessMode: contains(fs, 'writeable') && bool(fs.writeable) ? 'ReadWrite' : 'ReadOnly'
+        shareName: fs
+        accessMode: 'ReadWrite'
       }
     }
   }]
@@ -317,6 +317,13 @@ resource app 'Microsoft.App/containerApps@2023-05-01' = {
             memory: '0.5Gi'
           }
           probes: [
+            {
+              type: 'Startup'
+              httpGet: { port: 8080, path: '/liveness' }
+              initialDelaySeconds: 10
+              timeoutSeconds: 100
+              failureThreshold: 10
+            }
             { type: 'Liveness', httpGet: { port: 8080, path: '/liveness' } }
             {
               type: 'Readiness'

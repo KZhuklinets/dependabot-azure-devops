@@ -4,10 +4,13 @@
 require "spec_helper"
 require "dependabot/dependency"
 require "dependabot/dependency_change"
+require "dependabot/dependency_file"
+require "dependabot/pull_request_creator"
 require "dependabot/api_client"
 
 RSpec.describe Dependabot::ApiClient do
-  subject(:client) { Dependabot::ApiClient.new("http://example.com", 1, "token") }
+  subject(:client) { described_class.new("http://example.com", 1, "token") }
+
   let(:headers) { { "Content-Type" => "application/json" } }
 
   describe "create_pull_request" do
@@ -18,9 +21,12 @@ RSpec.describe Dependabot::ApiClient do
         updated_dependency_files: dependency_files
       )
     end
+    let(:source) do
+      instance_double(Dependabot::Source, provider: "github", repo: "gocardless/bump", directory: "/")
+    end
     let(:job) do
       instance_double(Dependabot::Job,
-                      source: nil,
+                      source: source,
                       credentials: [],
                       commit_message_options: [],
                       updating_a_pull_request?: false,
@@ -112,7 +118,8 @@ RSpec.describe Dependabot::ApiClient do
                   "source" => nil
                 }
               ],
-            "version" => "1.8.0"
+            "version" => "1.8.0",
+            "directory" => "/"
           }
         ])
         expect(data["updated-dependency-files"]).to eql([
@@ -167,16 +174,16 @@ RSpec.describe Dependabot::ApiClient do
             .with(headers: { "Authorization" => "token" })
             .with do |req|
               data = JSON.parse(req.body)["data"]
-              expect(data["dependencies"].first["removed"]).to eq(true)
-              expect(data["dependencies"].first.key?("version")).to eq(false)
-              expect(data["dependencies"].last.key?("removed")).to eq(false)
+              expect(data["dependencies"].first["removed"]).to be(true)
+              expect(data["dependencies"].first.key?("version")).to be(false)
+              expect(data["dependencies"].last.key?("removed")).to be(false)
               expect(data["dependencies"].last["version"]).to eq("1.8.0")
               true
             end)
       end
     end
 
-    context "grouped updates" do
+    context "when dealing with grouped updates" do
       it "does not include the dependency-group key by default" do
         client.create_pull_request(dependency_change, base_commit)
 
@@ -217,9 +224,12 @@ RSpec.describe Dependabot::ApiClient do
         updated_dependency_files: dependency_files
       )
     end
+    let(:source) do
+      instance_double(Dependabot::Source, provider: "github", repo: "gocardless/bump", directory: "/")
+    end
     let(:job) do
       instance_double(Dependabot::Job,
-                      source: nil,
+                      source: source,
                       credentials: [],
                       commit_message_options: [],
                       updating_a_pull_request?: true)
@@ -335,6 +345,7 @@ RSpec.describe Dependabot::ApiClient do
     let(:url) { "http://example.com/update_jobs/1/record_update_job_error" }
     let(:error_type) { "dependency_file_not_evaluatable" }
     let(:error_detail) { { "message" => "My message" } }
+
     before { stub_request(:post, url).to_return(status: 204) }
 
     it "hits the correct endpoint" do
@@ -353,6 +364,7 @@ RSpec.describe Dependabot::ApiClient do
     let(:url) { "http://example.com/update_jobs/1/record_update_job_unknown_error" }
     let(:error_type) { "server_error" }
     let(:error_detail) { { "message" => "My message" } }
+
     before { stub_request(:post, url).to_return(status: 204) }
 
     it "hits the correct endpoint" do
@@ -370,6 +382,7 @@ RSpec.describe Dependabot::ApiClient do
   describe "mark_job_as_processed" do
     let(:url) { "http://example.com/update_jobs/1/mark_as_processed" }
     let(:base_commit) { "sha" }
+
     before { stub_request(:patch, url).to_return(status: 204) }
 
     it "hits the correct endpoint" do
@@ -393,6 +406,7 @@ RSpec.describe Dependabot::ApiClient do
         ]
       )
     end
+
     before { stub_request(:post, url).to_return(status: 204) }
 
     it "hits the correct endpoint" do
@@ -406,6 +420,7 @@ RSpec.describe Dependabot::ApiClient do
 
   describe "ecosystem_versions" do
     let(:url) { "http://example.com/update_jobs/1/record_ecosystem_versions" }
+
     before { stub_request(:post, url).to_return(status: 204) }
 
     it "hits the correct endpoint" do
@@ -419,6 +434,7 @@ RSpec.describe Dependabot::ApiClient do
 
   describe "increment_metric" do
     let(:url) { "http://example.com/update_jobs/1/increment_metric" }
+
     before { stub_request(:post, url).to_return(status: 204) }
 
     context "when successful" do

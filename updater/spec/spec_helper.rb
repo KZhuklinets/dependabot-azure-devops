@@ -1,23 +1,9 @@
+# typed: false
 # frozen_string_literal: true
 
 require "dependabot/logger"
-require "dependabot/python"
-require "dependabot/terraform"
-require "dependabot/elm"
-require "dependabot/docker"
-require "dependabot/git_submodules"
-require "dependabot/github_actions"
-require "dependabot/composer"
-require "dependabot/nuget"
-require "dependabot/gradle"
-require "dependabot/maven"
-require "dependabot/hex"
-require "dependabot/cargo"
-require "dependabot/go_modules"
-require "dependabot/npm_and_yarn"
-require "dependabot/bundler"
-require "dependabot/pub"
 require "logger"
+require "rspec/sorbet"
 require "vcr"
 require "webmock/rspec"
 require "yaml"
@@ -31,6 +17,12 @@ require "yaml"
 Dependabot.logger = Logger.new($stdout, level: Logger::ERROR)
 
 WebMock.disable_net_connect!
+
+# Set git envvars so we can commit to repos during test setup if required
+ENV["GIT_AUTHOR_NAME"] = "dependabot-ci"
+ENV["GIT_AUTHOR_EMAIL"] = "no-reply@github.com"
+ENV["GIT_COMMITTER_NAME"] = "dependabot-ci"
+ENV["GIT_COMMITTER_EMAIL"] = "no-reply@github.com"
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
@@ -62,15 +54,13 @@ RSpec.configure do |config|
   end
 end
 
+RSpec::Sorbet.allow_doubles!
+
 VCR.configure do |config|
   config.cassette_library_dir = "spec/fixtures/vcr_cassettes"
   config.hook_into :webmock
   config.configure_rspec_metadata!
   config.allow_http_connections_when_no_cassette = false
-
-  config.filter_sensitive_data("<AZURE_ACCESS_TOKEN>") do
-    ENV.fetch("AZURE_ACCESS_TOKEN", nil)
-  end
 
   config.filter_sensitive_data("<AWS_ACCESS_KEY_ID>") do
     ENV.fetch("AWS_ACCESS_KEY_ID", nil)
