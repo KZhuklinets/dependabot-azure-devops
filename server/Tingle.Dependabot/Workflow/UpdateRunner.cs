@@ -77,7 +77,7 @@ internal partial class UpdateRunner
             Name = UpdaterContainerName,
             Image = $"ghcr.io/tinglesoftware/dependabot-updater-{ecosystem}:{updaterImageTag}",
             Resources = job.Resources!,
-            Args = { useV2 ? "update_files" : "update_script", },
+            Args = { useV2 ? "update_files" : "update_script_vnext", },
             VolumeMounts = { new ContainerAppVolumeMount { VolumeName = volumeName, MountPath = options.WorkingDirectory, }, },
         };
         var env = await CreateEnvironmentVariables(project, repository, update, job, directory, credentials, cancellationToken);
@@ -117,10 +117,11 @@ internal partial class UpdateRunner
                 ["purpose"] = "dependabot",
                 ["ecosystem"] = ecosystem,
                 ["repository"] = job.RepositorySlug,
-                ["directory"] = job.Directory,
                 ["machine-name"] = Environment.MachineName,
             },
         };
+        data.Tags.AddIfNotDefault("directory", job.Directory);
+        data.Tags.AddIfNotDefault("directories", ToJson(job.Directories));
 
         // write job definition file
         var experiments = new Dictionary<string, bool>
@@ -238,9 +239,6 @@ internal partial class UpdateRunner
                                                                                 IList<Dictionary<string, string>> credentials,
                                                                                 CancellationToken cancellationToken = default) // TODO: unit test this
     {
-        [return: NotNullIfNotNull(nameof(value))]
-        static string? ToJson<T>(T? value) => value is null ? null : JsonSerializer.Serialize(value, serializerOptions); // null ensures we do not add to the values
-
         // check if debug and determinism is enabled for the project via Feature Management
         var fmc = MakeTargetingContext(project, job);
         var debugAllJobs = await featureManager.IsEnabledAsync(FeatureNames.DebugAllJobs); // context is not passed because this is global
@@ -263,7 +261,6 @@ internal partial class UpdateRunner
 
             // env for v1
             ["DEPENDABOT_PACKAGE_MANAGER"] = job.PackageEcosystem!,
-            ["DEPENDABOT_DIRECTORY"] = job.Directory!,
             ["DEPENDABOT_OPEN_PULL_REQUESTS_LIMIT"] = update.OpenPullRequestsLimit.ToString(),
             ["DEPENDABOT_EXTRA_CREDENTIALS"] = ToJson(credentials),
             ["DEPENDABOT_FAIL_ON_EXCEPTION"] = "false", // we the script to run to completion so that we get notified of job completion
@@ -272,10 +269,13 @@ internal partial class UpdateRunner
         // Add optional values
         values.AddIfNotDefault("GITHUB_ACCESS_TOKEN", project.GithubToken ?? options.GithubToken)
               .AddIfNotDefault("DEPENDABOT_REBASE_STRATEGY", update.RebaseStrategy)
+              .AddIfNotDefault("DEPENDABOT_DIRECTORY", update.Directory)
+              .AddIfNotDefault("DEPENDABOT_DIRECTORIES", ToJson(update.Directories))
               .AddIfNotDefault("DEPENDABOT_TARGET_BRANCH", update.TargetBranch)
               .AddIfNotDefault("DEPENDABOT_VENDOR", update.Vendor ? "true" : null)
               .AddIfNotDefault("DEPENDABOT_REJECT_EXTERNAL_CODE", string.Equals(update.InsecureExternalCodeExecution, "deny").ToString().ToLowerInvariant())
               .AddIfNotDefault("DEPENDABOT_VERSIONING_STRATEGY", update.VersioningStrategy)
+              .AddIfNotDefault("DEPENDABOT_DEPENDENCY_GROUPS", ToJson(update.Groups))
               .AddIfNotDefault("DEPENDABOT_ALLOW_CONDITIONS", ToJson(update.Allow))
               .AddIfNotDefault("DEPENDABOT_IGNORE_CONDITIONS", ToJson(update.Ignore))
               .AddIfNotDefault("DEPENDABOT_COMMIT_MESSAGE_OPTIONS", ToJson(update.CommitMessage))
@@ -320,10 +320,12 @@ internal partial class UpdateRunner
         {
             ["job"] = new JsonObject
             {
+                ["dependency-groups"] = ToJsonNode(update.Groups ?? []),
                 ["allowed-updates"] = ToJsonNode(update.Allow ?? []),
                 ["credentials-metadata"] = ToJsonNode(credentialsMetadata).AsArray(),
                 // ["dependencies"] = null, // object array
                 ["directory"] = job.Directory,
+                ["directories"] = ToJsonNode(job.Directories),
                 // ["existing-pull-requests"] = null, // object array
                 ["experiments"] = ToJsonNode(experiments),
                 ["ignore-conditions"] = ToJsonNode(update.Ignore ?? []),
@@ -335,6 +337,7 @@ internal partial class UpdateRunner
                     ["provider"] = "azure",
                     ["repo"] = job.RepositorySlug,
                     ["directory"] = job.Directory,
+                    ["directories"] = ToJsonNode(job.Directories),
                     ["branch"] = update.TargetBranch,
                     ["hostname"] = url.Hostname,
                     ["api-endpoint"] = new UriBuilder
@@ -381,18 +384,17 @@ internal partial class UpdateRunner
         return credentials.Select(cred =>
         {
             var values = new Dictionary<string, string> { ["type"] = cred["type"], };
-            cred.TryGetValue("host", out var host);
 
-            // pull host from registry if available
-            if (string.IsNullOrWhiteSpace(host))
+            // if no host, pull host from url, index-url, or registry if available
+            if (!cred.TryGetValue("host", out var host) || string.IsNullOrWhiteSpace(host))
             {
-                host = cred.TryGetValue("registry", out var registry) && Uri.TryCreate($"https://{registry}", UriKind.Absolute, out var u) ? u.Host : host;
-            }
+                if (cred.TryGetValue("url", out var url) || cred.TryGetValue("index-url", out url)) { }
+                else if (cred.TryGetValue("registry", out var registry)) url = $"https://{registry}";
 
-            // pull host from registry if url
-            if (string.IsNullOrWhiteSpace(host))
-            {
-                host = cred.TryGetValue("url", out var url) && Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : host;
+                if (url is not null && Uri.TryCreate(url, UriKind.Absolute, out var u))
+                {
+                    host = u.Host;
+                }
             }
 
             values.AddIfNotDefault("host", host);
@@ -424,23 +426,31 @@ internal partial class UpdateRunner
             values.AddIfNotDefault("token", ConvertPlaceholder(v.Token, secrets));
             values.AddIfNotDefault("replaces-base", v.ReplacesBase is true ? "true" : null);
 
-            // Some credentials do not use the 'url' property in the Ruby updater.
-            // npm_registry and docker_registry use 'registry' which should be stripped off the scheme.
-            // terraform_registry uses 'host' which is the hostname from the given URL.
+            /*
+             * Some credentials do not use the 'url' property in the Ruby updater.
+             * The 'host' and 'registry' properties are derived from the given URL.
+             * The 'registry' property is derived from the 'url' by stripping off the scheme.
+             * The 'host' property is derived from the hostname of the 'url'.
+             *
+             * 'npm_registry' and 'docker_registry' use 'registry' only.
+             * 'terraform_registry' uses 'host' only.
+             * 'composer_repository' uses both 'url' and 'host'.
+             * 'python_index' uses 'index-url' instead of 'url'.
+            */
 
-            if (type == "docker_registry" || type == "npm_registry")
+            if (Uri.TryCreate(v.Url, UriKind.Absolute, out var url))
             {
-                values.Add("registry", v.Url!.Replace("https://", "").Replace("http://", ""));
+                var addRegistry = type is "docker_registry" or "npm_registry";
+                if (addRegistry) values.Add("registry", $"{url.Host}{url.PathAndQuery}".TrimEnd('/'));
+
+                var addHost = type is "terraform_registry" or "composer_repository";
+                if (addHost) values.Add("host", url.Host);
             }
-            else if (type == "terraform_registry")
-            {
-                values.Add("host", new Uri(v.Url!).Host);
-            }
-            else
-            {
-                values.AddIfNotDefault("url", v.Url!);
-            }
-            var useRegistryProperty = type.Contains("npm") || type.Contains("docker");
+
+            if (type is "python_index") values.AddIfNotDefault("index-url", v.Url);
+
+            var skipUrl = type is "docker_registry" or "npm_registry" or "terraform_registry" or "python_index";
+            if (!skipUrl) values.AddIfNotDefault("url", v.Url);
 
             return values;
         }).ToList();
@@ -485,6 +495,9 @@ internal partial class UpdateRunner
             _ => ecosystem,
         };
     }
+
+    [return: NotNullIfNotNull(nameof(value))]
+    private static string? ToJson<T>(T? value) => value is null ? null : JsonSerializer.Serialize(value, serializerOptions); // null ensures we do not add to the values
 }
 
 public readonly record struct UpdateRunnerState(UpdateJobStatus Status, DateTimeOffset? Start, DateTimeOffset? End)

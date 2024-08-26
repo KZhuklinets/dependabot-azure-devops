@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-  - package-ecosystem: 'docker' # See documentation for possible values
+  - package-ecosystem: 'nuget' # See documentation for possible values
     directory: '/' # Location of package manifests
     schedule:
       interval: 'weekly'
@@ -19,18 +19,22 @@ updates:
       time: '03:15'
     open-pull-requests-limit: 10
     registries:
-    - reg1
-    - reg2
+      - reg1
+      - reg2
     insecure-external-code-execution: 'deny'
     ignore:
-    - dependency-name: 'react'
-      update-types: ['version-update:semver-major']
-    - dependency-name: 'react-dom'
-      update-types: ['version-update:semver-major']
-    - dependency-name: '@types/react'
-      update-types: ['version-update:semver-major']
-    - dependency-name: '@types/react-dom'
-      update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: 'docker' # See documentation for possible values
+    directories: ['**/*'] # Location of package manifests
+    schedule:
+      interval: 'daily'
 registries:
   reg1:
     type: nuget-feed

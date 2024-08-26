@@ -5,46 +5,42 @@
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      time: "02:00"
-    open-pull-requests-limit: 10
+      interval: 'weekly'
+      time: '02:00'
 
-  - package-ecosystem: "devcontainers" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: 'devcontainers'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      time: "02:00"
-    open-pull-requests-limit: 10
+      interval: 'weekly'
+      time: '02:00'
 
-  - package-ecosystem: "bundler" # See documentation for possible values
-    directory: "/updater" # Location of package manifests
+  - package-ecosystem: 'bundler'
+    directory: '/updater'
     schedule:
-      interval: "weekly"
-      time: "02:00"
-    open-pull-requests-limit: 10
+      interval: 'weekly'
+      time: '02:00'
     groups:
       opentelemetry:
-        patterns: ["opentelemetry-*"]
+        patterns: ['opentelemetry-*']
       rubocop:
-        patterns: ["*rubocop*"]
+        patterns: ['*rubocop*']
       sentry:
-        patterns: ["sentry-*"]
+        patterns: ['sentry-*']
 
-  - package-ecosystem: "docker" # See documentation for possible values
-    directory: "/updater" # Location of package manifests
+  - package-ecosystem: 'docker'
+    directories: ['**/*']
     schedule:
-      interval: "weekly"
-      time: "02:00"
-    open-pull-requests-limit: 10
+      interval: 'weekly'
+      time: '02:00'
 
-  - package-ecosystem: "nuget" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: 'nuget'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      time: "02:00"
+      interval: 'weekly'
+      time: '02:00'
     open-pull-requests-limit: 10
     groups:
       azure:
@@ -53,32 +49,35 @@ updates:
           - 'Microsoft.Azure.*'
           - 'Microsoft.Extensions.Configuration.AzureAppConfiguration'
       event-bus:
-        patterns: ["Tingle.EventBus*"]
+        patterns: ['Tingle.EventBus*']
       microsoft:
-        patterns: ["Microsoft*"]
+        patterns:
+          - 'Microsoft.AspNetCore.*'
+          - 'Microsoft.EntityFrameworkCore.*'
+          - 'Microsoft.Extensions.*'
+          - 'dotnet-ef'
         exclude-patterns:
           - 'Microsoft.Azure.*'
           - 'Microsoft.Extensions.Configuration.AzureAppConfiguration'
-          - "Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
+          - 'Microsoft.VisualStudio.Azure.Containers.Tools.Targets'
       system:
-        patterns: ["System*"]
+        patterns: ['System*']
       tingle:
         patterns:
-          - "Tingle.AspNetCore*"
-          - "Tingle.Extensions*"
+          - 'Tingle.AspNetCore*'
+          - 'Tingle.Extensions*'
       xunit:
-        patterns: ["Xunit*"]
+        patterns: ['Xunit*']
 
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/extension" # Location of package manifests
+  - package-ecosystem: 'npm'
+    directories: ['/', '/extension']
     schedule:
-      interval: "weekly"
-      time: "02:00"
-    open-pull-requests-limit: 10
+      interval: 'weekly'
+      time: '02:00'
     groups:
       jest:
-        patterns: ["*jest*"]
+        patterns: ['*jest*']
       js-yaml:
-        patterns: ["*js-yaml*"]
+        patterns: ['*js-yaml*']
       js-ts-types:
-        patterns: ["@types/*"]
+        patterns: ['@types/*']

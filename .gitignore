@@ -1,3 +1,10 @@
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
 .vs/
 /.bundle/
 /.env
@@ -20,3 +27,4 @@ local/**.sh
 .DS_Store
 *git.store
 .idea
+node_modules/
