@@ -10,8 +10,6 @@ require "logger"
 require "dependabot/logger"
 require "dependabot/shared_helpers"
 
-# require "git"
-
 Dependabot.logger = Logger.new($stdout)
 
 # ensure logs are output immediately. Useful when running in certain hosts like ContainerGroups
@@ -494,7 +492,6 @@ puts "Using '#{$api_endpoint}' as API endpoint"
 puts "Pull Requests shall be linked to milestone (work item) #{$options[:milestone]}" if $options[:milestone]
 puts "Pull Requests shall be labeled #{$options[:custom_labels]}" if $options[:custom_labels]
 puts "Working in #{$repo_name}, '#{$options[:branch] || 'default'}' branch under '#{$options[:directory]}' directory"
-puts "hostname '#{$hostname}'"
 
 $source = Dependabot::Source.new(
   provider: $options[:provider],
@@ -533,10 +530,8 @@ if clone
 else
   puts "Fetching #{$package_manager} dependency files ..."
 end
-
 files = fetcher.files
 commit = fetcher.commit
-
 puts "Found #{files.length} dependency file(s) at commit #{commit}"
 files.each { |f| puts " - #{f.path}" }
 ##############################
