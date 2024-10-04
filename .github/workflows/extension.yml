@@ -50,6 +50,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
+          cache: npm
+
+      - name: Install (root)
+        run: npm install
+
+      - name: Format check (root)
+        run: npm run format:check
 
       - name: Install
         run: npm install
@@ -60,13 +67,13 @@ jobs:
         working-directory: '${{ github.workspace }}/extension'
 
       - name: Build
-        run: npm run build:prod
+        run: npm run build
         working-directory: '${{ github.workspace }}/extension'
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli@0.12.0
 
-      - name: Replace tokens
+      - name: Update version numbers in vss-extension.json overrides files
         uses: cschleiden/replace-tokens@v1
         with:
           files: '["${{ github.workspace }}/extension/overrides*.json"]'
@@ -74,11 +81,14 @@ jobs:
           MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
           BUILD_NUMBER: ${{ github.run_number }}
 
-      - name: Update values in extension/task/task.json
+      - name: Update minor and path versions in task.json
         run: |
-          echo "`jq '.version.Major=${{ steps.gitversion.outputs.major }}' extension/task/task.json`" > extension/task/task.json
-          echo "`jq '.version.Minor=${{ steps.gitversion.outputs.minor }}' extension/task/task.json`" > extension/task/task.json
-          echo "`jq '.version.Patch=${{ github.run_number }}' extension/task/task.json`" > extension/task/task.json
+          # Major versions are left out here because they are fixed in the task.json files.
+          # The minor and patch versions are updated to make sure we keep recent changes deployed.
+          echo "`jq '.version.Minor=34' extension/tasks/dependabotV1/task.json`" > extension/tasks/dependabotV1/task.json
+          echo "`jq '.version.Patch=${{ github.run_number }}' extension/tasks/dependabotV1/task.json`" > extension/tasks/dependabotV1/task.json
+          echo "`jq '.version.Minor=${{ steps.gitversion.outputs.minor }}' extension/tasks/dependabotV2/task.json`" > extension/tasks/dependabotV2/task.json
+          echo "`jq '.version.Patch=${{ github.run_number }}' extension/tasks/dependabotV2/task.json`" > extension/tasks/dependabotV2/task.json
 
       - name: Create Extension (dev)
         run: >

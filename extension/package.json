@@ -1,12 +1,16 @@
 {
   "name": "dependabot-azure-devops",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Dependabot Azure DevOps task",
   "main": "''",
   "scripts": {
+    "postdependencies": "cp -r node_modules tasks/dependabotV1/node_modules && cp -r node_modules tasks/dependabotV2/node_modules",
     "build": "tsc -p .",
-    "build:prod": "npm run build && cp -r node_modules task/node_modules",
-    "test": "jest"
+    "start": "npm run start:V2",
+    "start:V1": "node tasks/dependabotV1/index.js",
+    "start:V2": "node tasks/dependabotV2/index.js",
+    "test": "jest",
+    "package": "npx tfx-cli extension create --json5"
   },
   "repository": {
     "type": "git",
@@ -24,19 +28,20 @@
   },
   "homepage": "https://github.com/tinglesoftware/dependabot-azure-devops#readme",
   "dependencies": {
-    "axios": "1.7.5",
-    "azure-pipelines-task-lib": "4.17.0",
+    "axios": "1.7.7",
+    "azure-devops-node-api": "14.1.0",
+    "azure-pipelines-task-lib": "4.17.2",
     "js-yaml": "4.1.0"
   },
   "devDependencies": {
-    "@types/jest": "29.5.12",
+    "@types/jest": "29.5.13",
     "@types/js-yaml": "4.0.9",
-    "@types/node": "22.5.0",
+    "@types/node": "22.7.4",
     "@types/q": "1.5.8",
     "jest": "29.7.0",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4"
+    "typescript": "5.6.2"
   },
   "packageManager": "npm@10.8.1"
 }

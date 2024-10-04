@@ -4,11 +4,14 @@
 - [Why should I use the server?](#why-should-i-use-the-server)
 - [Composition](#composition)
 - [Deployment](#deployment)
-  - [Single click deployment](#single-click-deployment)
-  - [Deployment Parameters](#deployment-parameters)
-  - [Deployment with CLI](#deployment-with-cli)
-  - [Service Hooks and Subscriptions](#service-hooks-and-subscriptions)
+   * [Single click deployment](#single-click-deployment)
+   * [Deployment Parameters](#deployment-parameters)
+   * [Deployment with CLI](#deployment-with-cli)
+   * [Service Hooks and Subscriptions](#service-hooks-and-subscriptions)
 - [Keeping updated](#keeping-updated)
+- [Development guide](#development-guide)
+   * [Getting the development environment ready](#getting-the-development-environment-ready)
+   * [Running the unit tests](#running-the-unit-tests)
 
 # Why should I use the server?
 
@@ -59,10 +62,12 @@ The deployment exposes the following parameters that can be tuned to suit the se
 |githubToken|Access token for authenticating requests to GitHub. Required for vulnerability checks and to avoid rate limiting on free requests|No|&lt;empty&gt;|
 |imageTag|The image tag to use when pulling the docker containers. A tag also defines the version. You should avoid using `latest`. Example: `1.1.0`|No|&lt;version-downloaded&gt;|
 
+> [!NOTE]
 > The template includes a User Assigned Managed Identity, which is used when performing Azure Resource Manager operations such as deletions. In the deployment it creates the role assignments that it needs. These role assignments are on the resource group that you deploy to.
 
 ## Deployment with CLI
 
+> [!IMPORTANT]
 > Ensure the Azure CLI tools are installed and that you are logged in.
 
 For a one time deployment, it is similar to how you deploy other resources on Azure.
@@ -116,3 +121,22 @@ To enable automatic pickup of configuration files, merge conflict resolution and
 If you wish to keep your deployment updated, you can create a private repository with this one as a git submodule, configure dependabot to update it then add a new workflow that deploys to your preferred host using a manual trigger (or one of your choice).
 
 You can also choose to watch the repository so as to be notified when a new release is published.
+
+# Development guide
+
+## Getting the development environment ready
+
+Install [.NET 8](https://dotnet.microsoft.com/en-us/download) and [Docker](https://docs.docker.com/engine/install/) (with Linux containers); Install project dependencies using `dotnet` or Visual Studio [Code]:
+
+```bash
+cd server
+dotnet restore Tingle.Dependabot
+dotnet restore Tingle.Dependabot.Tests
+```
+
+## Running the unit tests
+
+```bash
+cd server
+dotnet test Tingle.Dependabot.Tests
+```

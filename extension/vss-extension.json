@@ -1,8 +1,9 @@
 {
+  "$schema": "http://json.schemastore.org/vss-extension.json",
   "manifestVersion": 1,
   "id": "dependabot",
   "name": "Dependabot",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "publisher": "tingle-software",
   "public": false,
   "targets": [
@@ -31,7 +32,7 @@
   },
   "files": [
     {
-      "path": "task"
+      "path": "tasks"
     },
     {
       "path": "images",
@@ -44,7 +45,7 @@
       "type": "ms.vss-distributed-task.task",
       "targets": ["ms.vss-distributed-task.tasks"],
       "properties": {
-        "name": "task"
+        "name": "tasks"
       }
     }
   ]

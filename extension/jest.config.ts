@@ -8,7 +8,6 @@ const config: Config.InitialOptions = {
   // },
   testEnvironment: 'node',
   preset: 'ts-jest',
-  rootDir: './tests',
 };
 
 export default config;
