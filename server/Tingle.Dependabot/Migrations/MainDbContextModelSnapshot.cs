@@ -17,7 +17,7 @@ namespace Tingle.Dependabot.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -200,8 +200,10 @@ namespace Tingle.Dependabot.Migrations
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("Directories")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Directory")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<long?>("Duration")
@@ -261,11 +263,11 @@ namespace Tingle.Dependabot.Migrations
 
                     b.HasIndex("RepositoryId");
 
-                    b.HasIndex("PackageEcosystem", "Directory");
+                    b.HasIndex("PackageEcosystem", "Directory", "Directories");
 
-                    b.HasIndex("PackageEcosystem", "Directory", "EventBusId")
+                    b.HasIndex("PackageEcosystem", "Directory", "Directories", "EventBusId")
                         .IsUnique()
-                        .HasFilter("[EventBusId] IS NOT NULL");
+                        .HasFilter("[Directory] IS NOT NULL AND [Directories] IS NOT NULL AND [EventBusId] IS NOT NULL");
 
                     b.ToTable("UpdateJobs");
                 });
