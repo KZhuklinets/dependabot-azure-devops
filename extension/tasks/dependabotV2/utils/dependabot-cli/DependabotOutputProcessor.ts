@@ -1,11 +1,12 @@
 import { GitPullRequestMergeStrategy, VersionControlChangeType } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { error, warning } from 'azure-pipelines-task-lib/task';
-import * as crypto from 'crypto';
 import * as path from 'path';
 import { AzureDevOpsWebApiClient } from '../azure-devops/AzureDevOpsWebApiClient';
-import { IPullRequestProperties } from '../azure-devops/interfaces/IPullRequestProperties';
-import { IDependabotUpdate } from '../dependabot/interfaces/IDependabotConfig';
+import { section } from '../azure-devops/formattingCommands';
+import { IFileChange } from '../azure-devops/interfaces/IFileChange';
+import { IPullRequestProperties } from '../azure-devops/interfaces/IPullRequest';
 import { ISharedVariables } from '../getSharedVariables';
+import { getBranchNameForUpdate } from './getBranchName';
 import { IDependabotUpdateOperation } from './interfaces/IDependabotUpdateOperation';
 import { IDependabotUpdateOutputProcessor } from './interfaces/IDependabotUpdateOutputProcessor';
 
@@ -16,6 +17,7 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
   private readonly prAuthorClient: AzureDevOpsWebApiClient;
   private readonly prApproverClient: AzureDevOpsWebApiClient;
   private readonly existingPullRequests: IPullRequestProperties[];
+  private readonly existingBranchNames: string[];
   private readonly taskInputs: ISharedVariables;
 
   // Custom properties used to store dependabot metadata in projects.
@@ -35,11 +37,13 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
     prAuthorClient: AzureDevOpsWebApiClient,
     prApproverClient: AzureDevOpsWebApiClient,
     existingPullRequests: IPullRequestProperties[],
+    existingBranchNames: string[],
   ) {
     this.taskInputs = taskInputs;
     this.prAuthorClient = prAuthorClient;
     this.prApproverClient = prApproverClient;
     this.existingPullRequests = existingPullRequests;
+    this.existingBranchNames = existingBranchNames;
   }
 
   /**
@@ -50,7 +54,8 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
    * @returns
    */
   public async process(update: IDependabotUpdateOperation, type: string, data: any): Promise<boolean> {
-    console.debug(`Processing output '${type}' with data:`, data);
+    section(`Processing '${type}'`);
+    console.debug('Data:', data);
     const project = this.taskInputs.project;
     const repository = this.taskInputs.repository;
     switch (type) {
@@ -60,8 +65,8 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
       case 'update_dependency_list':
         // Store the dependency list snapshot in project properties, if configured
         if (this.taskInputs.storeDependencyList) {
-          console.info(`Storing the dependency list snapshot for project '${project}'...`);
-          await this.prAuthorClient.updateProjectProperty(
+          console.info(`Updating the dependency list snapshot for project '${project}'...`);
+          return await this.prAuthorClient.updateProjectProperty(
             this.taskInputs.projectId,
             DependabotOutputProcessor.PROJECT_PROPERTY_NAME_DEPENDENCY_LIST,
             function (existingValue: string) {
@@ -76,7 +81,6 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
               return JSON.stringify(repoDependencyLists);
             },
           );
-          console.info(`Dependency list snapshot was updated for project '${project}'`);
         }
 
         return true;
@@ -96,11 +100,36 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
           return true;
         }
 
-        // Create a new pull request
+        const changedFiles = getPullRequestChangedFilesForOutputData(data);
         const dependencies = getPullRequestDependenciesPropertyValueForOutputData(data);
         const targetBranch =
           update.config['target-branch'] || (await this.prAuthorClient.getDefaultBranch(project, repository));
-        const sourceBranch = getSourceBranchNameForUpdate(update.config, targetBranch, dependencies);
+        const sourceBranch = getBranchNameForUpdate(
+          update.config['package-ecosystem'],
+          targetBranch,
+          update.config.directory || update.config.directories?.find((dir) => changedFiles[0]?.path?.startsWith(dir)),
+          dependencies['dependency-group-name'],
+          dependencies['dependencies'] || dependencies,
+          update.config['pull-request-branch-name']?.separator,
+        );
+
+        // Check if the source branch already exists or conflicts with an existing branch
+        const existingBranch = this.existingBranchNames?.find((branch) => sourceBranch == branch) || [];
+        if (existingBranch.length) {
+          error(
+            `Unable to create pull request as source branch '${sourceBranch}' already exists; Delete the existing branch and try again.`,
+          );
+          return false;
+        }
+        const conflictingBranches = this.existingBranchNames?.filter((branch) => sourceBranch.startsWith(branch)) || [];
+        if (conflictingBranches.length) {
+          error(
+            `Unable to create pull request as source branch '${sourceBranch}' would conflict with existing branch(es) '${conflictingBranches.join(', ')}'; Delete the conflicting branch(es) and try again.`,
+          );
+          return false;
+        }
+
+        // Create a new pull request
         const newPullRequestId = await this.prAuthorClient.createPullRequest({
           project: project,
           repository: repository,
@@ -141,7 +170,7 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
           reviewers: update.config.reviewers,
           labels: update.config.labels?.map((label) => label?.trim()) || [],
           workItems: update.config.milestone ? [update.config.milestone] : [],
-          changes: getPullRequestChangedFilesForOutputData(data),
+          changes: changedFiles,
           properties: buildPullRequestProperties(update.job['package-manager'], dependencies),
         });
 
@@ -179,10 +208,16 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
           project: project,
           repository: repository,
           pullRequestId: pullRequestToUpdate.id,
+          commit: data['base-commit-sha'] || update.job.source.commit,
+          author: {
+            email: this.taskInputs.authorEmail || DependabotOutputProcessor.PR_DEFAULT_AUTHOR_EMAIL,
+            name: this.taskInputs.authorName || DependabotOutputProcessor.PR_DEFAULT_AUTHOR_NAME,
+          },
           changes: getPullRequestChangedFilesForOutputData(data),
-          skipIfCommitsFromUsersOtherThan:
+          skipIfDraft: true,
+          skipIfCommitsFromAuthorsOtherThan:
             this.taskInputs.authorEmail || DependabotOutputProcessor.PR_DEFAULT_AUTHOR_EMAIL,
-          skipIfNoConflicts: true,
+          skipIfNotBehindTargetBranch: true,
         });
 
         // Re-approve the pull request, if required
@@ -218,7 +253,7 @@ export class DependabotOutputProcessor implements IDependabotUpdateOutputProcess
         //       How do we detect this? Do we need to?
 
         // Close the pull request
-        return await this.prAuthorClient.closePullRequest({
+        return await this.prAuthorClient.abandonPullRequest({
           project: project,
           repository: repository,
           pullRequestId: pullRequestToClose.id,
@@ -318,30 +353,7 @@ export function parsePullRequestProperties(
   );
 }
 
-function getSourceBranchNameForUpdate(update: IDependabotUpdate, targetBranch: string, dependencies: any): string {
-  const prefix = 'dependabot'; // TODO: Add config for this? Task V1 supported this via DEPENDABOT_BRANCH_NAME_PREFIX
-  const separator = update['pull-request-branch-name'].separator || '/';
-  const packageEcosystem = update['package-ecosystem'];
-  const targetBranchName = targetBranch?.replace(/^\/+|\/+$/g, ''); // strip leading/trailing slashes
-  if (dependencies['dependency-group-name']) {
-    // Group dependency update
-    // e.g. dependabot/nuget/main/microsoft-3b49c54d9e
-    const dependencyGroupName = dependencies['dependency-group-name'];
-    const dependencyHash = crypto
-      .createHash('md5')
-      .update(dependencies['dependencies'].map((d) => `${d['dependency-name']}-${d['dependency-version']}`).join(','))
-      .digest('hex')
-      .substring(0, 10);
-    return `${prefix}${separator}${packageEcosystem}${separator}${targetBranchName}${separator}${dependencyGroupName}-${dependencyHash}`;
-  } else {
-    // Single dependency update
-    // e.g. dependabot/nuget/main/Microsoft.Extensions.Logging-1.0.0
-    const leadDependency = dependencies.length === 1 ? dependencies[0] : null;
-    return `${prefix}${separator}${packageEcosystem}${separator}${targetBranchName}${separator}${leadDependency['dependency-name']}-${leadDependency['dependency-version']}`;
-  }
-}
-
-function getPullRequestChangedFilesForOutputData(data: any): any {
+function getPullRequestChangedFilesForOutputData(data: any): IFileChange[] {
   return data['updated-dependency-files']
     .filter((file) => file['type'] === 'file')
     .map((file) => {

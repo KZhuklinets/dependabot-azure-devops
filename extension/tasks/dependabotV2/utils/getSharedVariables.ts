@@ -27,6 +27,8 @@ export interface ISharedVariables {
   repository: string;
   /** Whether the repository was overridden via input */
   repositoryOverridden: boolean;
+  /** Path to the local repository source. When specified, Dependabot will use this local repo rather than cloning it from the remote repo again */
+  repositorySourcePath?: string;
 
   /** Organisation API endpoint URL */
   apiEndpointUrl: string;
@@ -87,16 +89,27 @@ export default function getSharedVariables(): ISharedVariables {
   let hostname: string = extractHostname(formattedOrganizationUrl);
   let port: string = formattedOrganizationUrl.port;
   let virtualDirectory: string = extractVirtualDirectory(formattedOrganizationUrl);
+  if (!virtualDirectory) {
+    tl.debug(`No virtual directory detected; Running for Azure DevOps Services.`);
+  } else {
+    tl.debug(`Virtual directory detected; Running for an on-premises Azure DevOps Server.`);
+  }
   let organization: string = extractOrganization(organizationUrl);
   let projectId: string = tl.getVariable('System.TeamProjectId');
   let project: string = encodeURI(tl.getVariable('System.TeamProject')); // encode special characters like spaces
   let repository: string = tl.getInput('targetRepositoryName');
   let repositoryOverridden = typeof repository === 'string';
   if (!repositoryOverridden) {
-    tl.debug('No custom repository provided. The Pipeline Repository Name shall be used.');
     repository = tl.getVariable('Build.Repository.Name');
+    tl.debug(`No custom repository provided; Running update for local repository.`);
+  } else {
+    tl.debug(`Custom repository provided; Running update for remote repository.`);
   }
   repository = encodeURI(repository); // encode special characters like spaces
+
+  // If the repository name is NOT overridden, then use the already cloned repository source directory
+  // for the dependabot update operation. This will save time and bandwidth as we don't have to clone the repository again.
+  let repositorySourcePath = repositoryOverridden ? undefined : tl.getVariable('Build.SourcesDirectory');
 
   const virtualDirectorySuffix = virtualDirectory?.length > 0 ? `${virtualDirectory}/` : '';
   let apiEndpointUrl = `${protocol}://${hostname}:${port}/${virtualDirectorySuffix}`;
@@ -155,6 +168,7 @@ export default function getSharedVariables(): ISharedVariables {
     project,
     repository,
     repositoryOverridden,
+    repositorySourcePath,
 
     apiEndpointUrl,
 
